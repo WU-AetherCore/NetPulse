@@ -17,6 +17,7 @@ from database import (
     init_db, get_all_devices, get_device_by_mac,
     get_hourly_traffic, get_daily_traffic, get_connection_events,
     update_device_name, get_summary, cleanup_old_data,
+    get_period_summary, get_period_settings, set_period_settings, check_and_reset_period, update_period_traffic,
     set_device_blocked, set_device_limit, get_managed_devices,
     set_device_wifi_band, get_band_stats, get_traffic_ranking
 )
@@ -80,6 +81,56 @@ def api_summary():
     }
     summary['timestamp'] = int(time.time())
     return jsonify(summary)
+
+
+@app.route('/api/period-summary')
+def api_period_summary():
+    """获取周期流量统计概览"""
+    # 检查是否需要进入新周期
+    check_and_reset_period()
+    # 更新当前周期流量
+    update_period_traffic()
+    period_data = get_period_summary()
+
+    # 格式化数据
+    for p in period_data['history']:
+        p['total_upload_str'] = format_bytes(p.get('total_upload', 0))
+        p['total_download_str'] = format_bytes(p.get('total_download', 0))
+        p['total_str'] = format_bytes(p.get('total_upload', 0) + p.get('total_download', 0))
+        from datetime import datetime
+        if p.get('start_time'):
+            p['start_time_str'] = datetime.fromtimestamp(p['start_time']).strftime('%Y-%m-%d')
+        if p.get('end_time'):
+            p['end_time_str'] = datetime.fromtimestamp(p['end_time']).strftime('%Y-%m-%d')
+
+    period_data['current']['total_upload_str'] = format_bytes(period_data['current']['total_upload'])
+    period_data['current']['total_download_str'] = format_bytes(period_data['current']['total_download'])
+    period_data['current']['total_str'] = format_bytes(period_data['current']['total'])
+    from datetime import datetime
+    period_data['current']['start_time_str'] = datetime.fromtimestamp(period_data['current']['start_time']).strftime('%Y-%m-%d')
+
+    return jsonify(period_data)
+
+
+@app.route('/api/period-settings', methods=['GET', 'POST'])
+def api_period_settings():
+    """获取或设置周期统计类型"""
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        period_type = data.get('period_type', 'monthly')
+        custom_days = int(data.get('custom_days', 30))
+        settings = set_period_settings(period_type, custom_days)
+        return jsonify({'success': True, 'settings': settings})
+    else:
+        return jsonify(get_period_settings())
+
+
+@app.route('/api/period-reset', methods=['POST'])
+def api_period_reset():
+    """手动重置当前周期（清零）"""
+    settings = get_period_settings()
+    result = set_period_settings(settings['period_type'], settings['custom_days'])
+    return jsonify({'success': True, 'message': '周期已重置，流量已清零', 'current': result})
 
 
 @app.route('/api/devices')
