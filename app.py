@@ -27,7 +27,8 @@ from device_manager import (
     init_device_manager, cleanup_device_manager,
     block_device, unblock_device, limit_device, unlimit_device,
     get_blocked_devices, get_limited_devices,
-    start_global_spoof, stop_global_spoof, get_global_spoof_status
+    start_global_spoof, stop_global_spoof, get_global_spoof_status,
+    ensure_global_spoof_running, ensure_nat_and_forwarding
 )
 
 app = Flask(__name__)
@@ -86,13 +87,9 @@ def api_summary():
 @app.route('/api/period-summary')
 def api_period_summary():
     """获取周期流量统计概览"""
-    # 检查是否需要进入新周期
     check_and_reset_period()
-    # 更新当前周期流量
     update_period_traffic()
     period_data = get_period_summary()
-
-    # 格式化数据
     for p in period_data['history']:
         p['total_upload_str'] = format_bytes(p.get('total_upload', 0))
         p['total_download_str'] = format_bytes(p.get('total_download', 0))
@@ -102,13 +99,11 @@ def api_period_summary():
             p['start_time_str'] = datetime.fromtimestamp(p['start_time']).strftime('%Y-%m-%d')
         if p.get('end_time'):
             p['end_time_str'] = datetime.fromtimestamp(p['end_time']).strftime('%Y-%m-%d')
-
     period_data['current']['total_upload_str'] = format_bytes(period_data['current']['total_upload'])
     period_data['current']['total_download_str'] = format_bytes(period_data['current']['total_download'])
     period_data['current']['total_str'] = format_bytes(period_data['current']['total'])
     from datetime import datetime
     period_data['current']['start_time_str'] = datetime.fromtimestamp(period_data['current']['start_time']).strftime('%Y-%m-%d')
-
     return jsonify(period_data)
 
 
@@ -145,7 +140,6 @@ def api_devices():
         dev['download_rate_str'] = format_rate(dev.get('current_download_rate', 0))
         dev['last_seen_str'] = datetime.fromtimestamp(dev['last_seen']).strftime('%Y-%m-%d %H:%M:%S') if dev.get('last_seen') else '未知'
         dev['first_seen_str'] = datetime.fromtimestamp(dev['first_seen']).strftime('%Y-%m-%d %H:%M:%S') if dev.get('first_seen') else '未知'
-        # 在线时长
         if dev.get('is_online') and dev.get('last_seen'):
             online_seconds = int(time.time()) - dev['last_seen']
             dev['online_duration'] = f"{online_seconds//3600}小时{(online_seconds%3600)//60}分"
@@ -160,21 +154,15 @@ def api_device_detail(mac):
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
-
     device['total_upload_str'] = format_bytes(device.get('total_upload', 0))
     device['total_download_str'] = format_bytes(device.get('total_download', 0))
     device['upload_rate_str'] = format_rate(device.get('current_upload_rate', 0))
     device['download_rate_str'] = format_rate(device.get('current_download_rate', 0))
-
-    # 获取流量数据
     hourly = get_hourly_traffic(mac, 24)
     daily = get_daily_traffic(mac, 30)
-
-    # 获取连接事件
     events = get_connection_events(limit=50, mac=mac)
     for evt in events:
         evt['time_str'] = datetime.fromtimestamp(evt['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
-
     return jsonify({
         "device": device,
         "hourly_traffic": hourly,
@@ -248,15 +236,12 @@ def api_block_device(mac):
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
-
     ip = device.get('ip', '')
     if not ip:
         return jsonify({"error": "设备IP未知，无法封禁"}), 400
-
     try:
         block_device(ip, mac)
         set_device_blocked(mac, True)
-        # 记录事件
         from database import record_connection_event
         record_connection_event(mac, ip, 'blocked', '设备被管理员封禁，已踢出网络')
         return jsonify({"success": True, "message": f"设备 {ip} 已被封禁"})
@@ -270,7 +255,6 @@ def api_unblock_device(mac):
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
-
     ip = device.get('ip', '')
     try:
         unblock_device(ip, mac)
@@ -288,18 +272,14 @@ def api_limit_device(mac):
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
-
     data = request.get_json()
     upload_kbps = data.get('upload_kbps', 0)
     download_kbps = data.get('download_kbps', 0)
-
     if upload_kbps <= 0 and download_kbps <= 0:
         return jsonify({"error": "限速值必须大于0"}), 400
-
     ip = device.get('ip', '')
     if not ip:
         return jsonify({"error": "设备IP未知，无法限速"}), 400
-
     try:
         limit_device(ip, mac, upload_kbps, download_kbps)
         set_device_limit(mac, upload_kbps, download_kbps)
@@ -317,7 +297,6 @@ def api_unlimit_device(mac):
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
-
     ip = device.get('ip', '')
     try:
         unlimit_device(ip, mac)
@@ -352,14 +331,11 @@ def api_set_device_band(mac):
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
-
     data = request.get_json()
     band = data.get('band', 'unknown').strip().lower()
-
     valid_bands = ['2.4g', '5g', 'wired', 'unknown']
     if band not in valid_bands:
         return jsonify({"error": f"无效的频段，可选: {', '.join(valid_bands)}"}), 400
-
     set_device_wifi_band(mac, band)
     band_names = {'2.4g': '2.4GHz', '5g': '5GHz', 'wired': '有线连接', 'unknown': '未知'}
     return jsonify({"success": True, "message": f"设备频段已设置为 {band_names.get(band, band)}"})
@@ -369,7 +345,6 @@ def api_set_device_band(mac):
 def api_band_stats():
     """获取各频段设备统计"""
     stats = get_band_stats()
-    # 确保所有频段都有数据
     result = {
         '2.4g': stats.get('2.4g', {'total': 0, 'online': 0}),
         '5g': stats.get('5g', {'total': 0, 'online': 0}),
@@ -381,31 +356,22 @@ def api_band_stats():
 
 @app.route('/api/traffic-ranking')
 def api_traffic_ranking():
-    """获取设备流量排行榜
-    参数: days=1/7/30, sort=total/download/upload
-    """
+    """获取设备流量排行榜"""
     days = request.args.get('days', 7, type=int)
     sort = request.args.get('sort', 'total')
-    
     if days not in [1, 7, 30]:
         days = 7
-    
     ranking = get_traffic_ranking(days=days, limit=50)
-    
-    # 格式化数据
     for item in ranking:
         item['total_upload_str'] = format_bytes(item.get('total_upload', 0))
         item['total_download_str'] = format_bytes(item.get('total_download', 0))
         item['total_str'] = format_bytes(item.get('total_upload', 0) + item.get('total_download', 0))
-    
-    # 按指定方式排序
     if sort == 'download':
         ranking.sort(key=lambda x: x['total_download'], reverse=True)
     elif sort == 'upload':
         ranking.sort(key=lambda x: x['total_upload'], reverse=True)
     else:
         ranking.sort(key=lambda x: x['total_upload'] + x['total_download'], reverse=True)
-    
     return jsonify({
         'days': days,
         'sort': sort,
@@ -475,6 +441,27 @@ def api_system():
 app_start_time = time.time()
 
 
+def health_check_loop():
+    """健康检查线程 - 定期检测并自动修复各种异常"""
+    import threading
+    check_count = 0
+    while True:
+        try:
+            check_count += 1
+            # 每30秒检查一次ARP欺骗线程和NAT
+            if check_count % 3 == 0:
+                ensure_global_spoof_running()
+                ensure_nat_and_forwarding()
+            # 每分钟输出一次健康状态
+            if check_count % 6 == 0:
+                status = get_global_spoof_status()
+                print(f"[HealthCheck] 状态: ARP欺骗={status['enabled']}, 线程存活={status.get('thread_alive')}, 心跳={status.get('heartbeat_age')}s")
+            time.sleep(10)
+        except Exception as e:
+            print(f"[HealthCheck] 健康检查异常: {e}")
+            time.sleep(10)
+
+
 def main():
     """主函数"""
     global scanner, traffic_monitor
@@ -483,29 +470,28 @@ def main():
     print("  NetPulse - 网络设备管理系统")
     print("=" * 60)
 
-    # 初始化数据库
     print("[Init] 初始化数据库...")
     init_db()
 
-    # 启动扫描线程
     print("[Init] 启动设备扫描线程...")
     scanner = Scanner(interval=30)
     scanner.start()
 
-    # 启动流量监控线程
     print("[Init] 启动流量监控线程...")
     traffic_monitor = TrafficMonitor(interval=10)
     traffic_monitor.start()
 
-    # 初始化设备管理系统
     print("[Init] 初始化设备管理系统...")
     init_device_manager()
 
-    # 自动开启全局流量监控（默认开启）
     print("[Init] 自动开启全局流量监控...")
     start_global_spoof()
 
-    # 启动Web服务
+    print("[Init] 启动健康检查线程（自动修复）...")
+    import threading
+    health_thread = threading.Thread(target=health_check_loop, daemon=True)
+    health_thread.start()
+
     print(f"[Init] Web服务启动: http://{WEB_HOST}:{WEB_PORT}")
     print("=" * 60)
 
