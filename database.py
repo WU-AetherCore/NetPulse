@@ -666,13 +666,14 @@ def check_and_reset_period():
     return False
 
 def get_period_history(limit=20):
-    """获取历史周期流量统计（默认返回最近20个）"""
+    """获取历史周期流量统计（默认返回最近20个，已结束的周期，按开始时间倒序，最新的在前）"""
     conn = get_db()
     c = conn.cursor()
     c.execute("""
         SELECT period_type, period_label, start_time, end_time, total_upload, total_download, is_current
         FROM traffic_periods
-        ORDER BY start_time DESC
+        WHERE is_current = 0
+        ORDER BY start_time DESC, id DESC
         LIMIT ?
     """, (limit,))
     rows = c.fetchall()
