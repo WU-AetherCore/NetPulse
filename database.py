@@ -509,11 +509,34 @@ def get_period_settings():
     }
 
 def set_period_settings(period_type, custom_days=30):
-    """设置周期统计类型"""
+    """设置周期统计类型（只切换周期类型，不清零已有流量数据）
+    注意：切换周期类型不会清零当前已统计的流量，如需清零请手动调用 reset_current_period()
+    """
     set_setting('period_type', period_type)
     set_setting('period_custom_days', str(custom_days))
-    # 重置当前周期
-    reset_current_period(period_type, custom_days)
+
+    # 更新当前周期的类型、标签和开始时间，但不清零数据
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM traffic_periods WHERE is_current=1 ORDER BY id DESC LIMIT 1")
+    row = c.fetchone()
+    if row:
+        # 更新当前周期的类型、标签和开始时间（保持已有流量数据不变）
+        new_start = get_period_start_time(period_type, custom_days)
+        new_label = get_period_label(period_type, new_start)
+        c.execute("UPDATE traffic_periods SET period_type=?, period_label=?, start_time=? WHERE id=?",
+                  (period_type, new_label, new_start, row['id']))
+    else:
+        # 没有当前周期时创建一个（此时还没有数据，清零无影响）
+        start_time = get_period_start_time(period_type, custom_days)
+        label = get_period_label(period_type, start_time)
+        c.execute("""
+            INSERT INTO traffic_periods (period_type, period_label, start_time, is_current)
+            VALUES (?, ?, ?, 1)
+        """, (period_type, label, start_time))
+    conn.commit()
+    conn.close()
+
     return get_period_settings()
 
 def get_period_start_time(period_type='monthly', custom_days=30):
