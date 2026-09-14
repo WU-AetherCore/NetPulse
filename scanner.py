@@ -64,7 +64,10 @@ def read_arp_table():
                 if mac_idx < len(parts):
                     mac = parts[mac_idx]
                     if mac and mac != '00:00:00:00:00:00':
-                        devices[mac] = ip
+                        # 优先使用IPv4地址，如果已经有IPv4就不用IPv6覆盖
+                        is_ipv4 = '.' in ip and ':' not in ip
+                        if mac not in devices or is_ipv4:
+                            devices[mac] = ip
     except Exception as e:
         print(f"读取ARP表失败: {e}")
     return devices
@@ -83,8 +86,39 @@ def ping_scan():
         print(f"ping扫描失败: {e}")
 
 
+def add_self_device():
+    """自动把自己（Orange Pi）添加到设备列表"""
+    try:
+        import socket
+        # 获取本机IP和MAC
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+        
+        # 从/sys/class/net获取MAC
+        mac = None
+        for iface in ['eth0', 'wlan0']:
+            try:
+                with open(f'/sys/class/net/{iface}/address', 'r') as f:
+                    mac = f.read().strip()
+                    break
+            except:
+                continue
+        
+        if local_ip and mac:
+            from database import upsert_device
+            upsert_device(mac, local_ip, name='Orange Pi Zero2', vendor='Orange Pi')
+            print(f"[Scanner] 已添加本机设备: {local_ip} ({mac})")
+    except Exception as e:
+        print(f"[Scanner] 添加本机设备失败: {e}")
+
+
 def scan_devices():
     """扫描所有设备"""
+    # 先添加自己
+    add_self_device()
+    
     # 先ping扫描唤醒设备
     ping_scan()
     time.sleep(1)
