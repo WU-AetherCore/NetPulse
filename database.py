@@ -497,9 +497,11 @@ def get_period_settings():
     """获取周期统计设置"""
     period_type = get_setting('period_type', 'monthly')
     custom_days = int(get_setting('period_custom_days', '30'))
+    auto_reset = get_setting('period_auto_reset', '1') == '1'
     return {
         'period_type': period_type,
         'custom_days': custom_days,
+        'auto_reset': auto_reset,
         'period_label': {
             'monthly': '每月',
             'quarterly': '每季度',
@@ -508,12 +510,14 @@ def get_period_settings():
         }.get(period_type, '每月')
     }
 
-def set_period_settings(period_type, custom_days=30):
+def set_period_settings(period_type, custom_days=30, auto_reset=True):
     """设置周期统计类型（只切换周期类型，不清零已有流量数据）
     注意：切换周期类型不会清零当前已统计的流量，如需清零请手动调用 reset_current_period()
+    auto_reset: 是否在周期结束时自动清零（默认True）
     """
     set_setting('period_type', period_type)
     set_setting('period_custom_days', str(custom_days))
+    set_setting('period_auto_reset', '1' if auto_reset else '0')
 
     # 更新当前周期的类型、标签和开始时间，但不清零数据
     conn = get_db()
@@ -649,10 +653,15 @@ def reset_current_period(period_type='monthly', custom_days=30, max_history=20):
     }
 
 def check_and_reset_period():
-    """检查是否需要进入新周期，如果需要则自动清零"""
+    """检查是否需要进入新周期，如果需要则自动清零（仅当 auto_reset 开启时）"""
     settings = get_period_settings()
     period_type = settings['period_type']
     custom_days = settings['custom_days']
+    auto_reset = settings.get('auto_reset', True)
+
+    # 如果关闭了自动清零，则不执行自动重置
+    if not auto_reset:
+        return False
 
     current = get_current_period()
     expected_start = get_period_start_time(period_type, custom_days)
