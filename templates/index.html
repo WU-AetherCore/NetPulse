@@ -278,6 +278,261 @@
             color: #666;
         }
         .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+
+        /* 自定义下拉选择框深色主题 */
+        .custom-select {
+            position: relative;
+            display: inline-block;
+            min-width: 100px;
+        }
+        .custom-select-trigger {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 6px 28px 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .custom-select-trigger:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(102,126,234,0.5);
+        }
+        .custom-select-trigger::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #aaa;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.2s;
+        }
+        .custom-select.open .custom-select-trigger::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .custom-select.open .custom-select-options {
+            display: block;
+        }
+        .custom-select-option {
+            padding: 8px 12px;
+            color: #e0e0e0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .custom-select-option:hover {
+            background: rgba(102,126,234,0.2);
+            color: #fff;
+        }
+        .custom-select-option.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        /* 周期流量统计弹窗 */
+        .period-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .period-modal-content {
+            background: #1a1a2e;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid #333;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .period-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #333;
+            background: linear-gradient(135deg, #9c27b0, #673ab7);
+        }
+        .period-modal-header h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 18px;
+        }
+        .period-modal-close {
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .period-modal-body {
+            padding: 20px;
+        }
+        .period-current {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .period-current-title {
+            font-size: 16px;
+            color: #e0e0e0;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        .period-current-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+        .period-stat-item {
+            text-align: center;
+        }
+        .period-stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .period-stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .period-current-time {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .period-settings {
+            margin-bottom: 20px;
+        }
+        .period-settings-title, .period-history-title {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .period-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .period-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #16213e;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 13px;
+        }
+        .period-option input {
+            cursor: pointer;
+        }
+        .period-custom-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #ccc;
+            font-size: 13px;
+        }
+        .period-custom-input input {
+            background: #0f3460;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .period-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .period-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .period-btn:hover {
+            opacity: 0.8;
+        }
+        .period-btn-primary {
+            background: #9c27b0;
+            color: #fff;
+        }
+        .period-btn-danger {
+            background: #f44336;
+            color: #fff;
+        }
+        .period-history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .period-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #16213e;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .period-history-item.current {
+            border-left: 3px solid #9c27b0;
+        }
+        .period-history-label {
+            font-size: 13px;
+            color: #ddd;
+        }
+        .period-history-time {
+            font-size: 11px;
+            color: #666;
+        }
+        .period-history-traffic {
+            font-size: 13px;
+            color: #9c27b0;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .header { padding: 12px 15px; }
@@ -362,11 +617,14 @@
                     <span>📱 所有设备</span>
                     <div>
                         <input type="text" id="searchInput" placeholder="搜索设备..." style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;" oninput="filterDevices()">
-                        <select id="filterSelect" onchange="filterDevices()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;margin-left:8px;">
-                            <option value="all">全部</option>
-                            <option value="online">在线</option>
-                            <option value="offline">离线</option>
-                        </select>
+                        <div class="custom-select" id="filterSelect" style="margin-left:8px;">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('filterSelect')" style="padding:8px 28px 8px 12px;font-size:13px;">全部</div>
+                            <div class="custom-select-options">
+                                <div class="custom-select-option selected" onclick="selectCustomOption('filterSelect','all','全部')">全部</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('filterSelect','online','在线')">在线</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('filterSelect','offline','离线')">离线</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -402,11 +660,14 @@
                             <button class="tab-sub-btn" onclick="switchRankingPeriod(this,7)">本周</button>
                             <button class="tab-sub-btn" onclick="switchRankingPeriod(this,30)">本月</button>
                         </div>
-                        <select id="rankingSort" onchange="loadRanking()" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px 10px;font-size:12px;">
-                            <option value="total">总流量</option>
-                            <option value="download">下载</option>
-                            <option value="upload">上传</option>
-                        </select>
+                        <div class="custom-select" id="rankingSort">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('rankingSort')">总流量</div>
+                            <div class="custom-select-options">
+                                <div class="custom-select-option selected" onclick="selectCustomOption('rankingSort','total','总流量')">总流量</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('rankingSort','download','下载')">下载</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('rankingSort','upload','上传')">上传</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="rankingList"></div>
@@ -442,6 +703,7 @@
                         <li>✅ 🚫 设备封禁（踢出网络，ARP欺骗+iptables DROP）</li>
                         <li>✅ ⏱️ 设备限速（tc HTB流量控制，可设上下行带宽）</li>
                         <li>✅ 设备管理状态实时显示</li>
+                        <li>✅ 📊 周期流量统计（每月/每季度/每年/自定义，自动清零）</li>
                     </ul>
                     <p style="margin-top:15px;">🔧 技术栈：Python Flask + SQLite + iptables + tc + ARP欺骗 + Chart.js</p>
                     <p>💾 数据存储：本地SQLite数据库，数据保留90天</p>
@@ -520,11 +782,123 @@
         </div>
     </div>
 
+    <!-- 周期流量统计弹窗 -->
+    <div id="periodModal" class="period-modal" style="display:none;">
+        <div class="period-modal-content">
+            <div class="period-modal-header">
+                <h3>📊 流量周期统计</h3>
+                <span class="period-modal-close" onclick="closePeriodModal()">&times;</span>
+            </div>
+            <div class="period-modal-body">
+                <!-- 当前周期统计 -->
+                <div class="period-current">
+                    <div class="period-current-title" id="currentPeriodLabel">本月流量统计</div>
+                    <div class="period-current-stats">
+                        <div class="period-stat-item">
+                            <div class="period-stat-label">上传</div>
+                            <div class="period-stat-value" style="color:#ff9800;" id="currentUpload">0 B</div>
+                        </div>
+                        <div class="period-stat-item">
+                            <div class="period-stat-label">下载</div>
+                            <div class="period-stat-value" style="color:#2196f3;" id="currentDownload">0 B</div>
+                        </div>
+                        <div class="period-stat-item">
+                            <div class="period-stat-label">总计</div>
+                            <div class="period-stat-value" style="color:#9c27b0;" id="currentTotal">0 B</div>
+                        </div>
+                    </div>
+                    <div class="period-current-time" id="currentPeriodTime">开始时间：-</div>
+                </div>
+
+                <!-- 周期设置 -->
+                <div class="period-settings">
+                    <div class="period-settings-title">统计周期设置</div>
+                    <div class="period-options">
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="monthly" checked onchange="onPeriodTypeChange()">
+                            <span>每月（月初清零）</span>
+                        </label>
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="quarterly" onchange="onPeriodTypeChange()">
+                            <span>每季度</span>
+                        </label>
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="yearly" onchange="onPeriodTypeChange()">
+                            <span>每年</span>
+                        </label>
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="custom" onchange="onPeriodTypeChange()">
+                            <span>自定义</span>
+                        </label>
+                    </div>
+                    <div class="period-custom-input" id="customDaysInput" style="display:none;">
+                        <span>每</span>
+                        <input type="number" id="customDays" value="30" min="1" max="365" style="width:60px;">
+                        <span>天清零一次</span>
+                    </div>
+                    <div class="period-actions">
+                        <button class="period-btn period-btn-primary" onclick="savePeriodSettings()">保存设置</button>
+                        <button class="period-btn period-btn-danger" onclick="resetPeriod()">立即清零</button>
+                    </div>
+                </div>
+
+                <!-- 历史周期 -->
+                <div class="period-history">
+                    <div class="period-history-title">历史周期统计</div>
+                    <div class="period-history-list" id="periodHistoryList">
+                        <div style="text-align:center;color:#888;padding:20px;">暂无历史数据</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allDevices = [];
         let trafficChart = null;
         let trafficHistory = [];
         let currentTab = 'dashboard';
+
+        // ============================================================
+        // 自定义下拉选择框组件
+        // ============================================================
+        function toggleCustomSelect(id) {
+            const select = document.getElementById(id);
+            const wasOpen = select.classList.contains('open');
+            document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+            if (!wasOpen) {
+                select.classList.add('open');
+            }
+        }
+
+        function selectCustomOption(id, value, text) {
+            const select = document.getElementById(id);
+            select.querySelector('.custom-select-trigger').textContent = text;
+            select.querySelectorAll('.custom-select-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            const options = select.querySelectorAll('.custom-select-option');
+            options.forEach(opt => {
+                if (opt.getAttribute('onclick').indexOf("'" + value + "'") !== -1) {
+                    opt.classList.add('selected');
+                }
+            });
+            select.classList.remove('open');
+            select.dataset.value = value;
+            if (id === 'rankingSort') loadRanking();
+            if (id === 'filterSelect') filterDevices();
+        }
+
+        function getCustomSelectValue(id) {
+            const select = document.getElementById(id);
+            return select.dataset.value || 'total';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-select')) {
+                document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+            }
+        });
 
         // 格式化
         function formatBytes(bytes) {
@@ -582,6 +956,24 @@
             }
         }
 
+        // 频段选择（自定义下拉组件）
+        function selectBandOption(mac, band, text) {
+            const selectId = 'bandSelect_' + mac.replace(/:/g,'');
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.querySelector('.custom-select-trigger').textContent = text;
+                select.querySelectorAll('.custom-select-option').forEach(opt => opt.classList.remove('selected'));
+                const options = select.querySelectorAll('.custom-select-option');
+                options.forEach(opt => {
+                    if (opt.getAttribute('onclick').indexOf("'" + band + "'") !== -1) {
+                        opt.classList.add('selected');
+                    }
+                });
+                select.classList.remove('open');
+            }
+            setDeviceBand(mac, band);
+        }
+
         // 切换标签
         function switchTab(tab) {
             currentTab = tab;
@@ -626,11 +1018,11 @@
                         <div class="stat-value" style="color:#2196f3;font-size:22px;">${data.formatted.avg_download_rate}</div>
                         <div class="stat-sub">累计下载 ${data.formatted.total_download}</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="openPeriodModal()" style="cursor:pointer;border-left:3px solid #9c27b0;">
                         <div class="stat-icon">📊</div>
-                        <div class="stat-label">总流量</div>
-                        <div class="stat-value" style="color:#9c27b0;font-size:22px;">${formatBytes(data.total_upload + data.total_download)}</div>
-                        <div class="stat-sub">上传 + 下载</div>
+                        <div class="stat-label">总流量<span style="font-size:10px;color:#888;margin-left:5px;">点击设置周期</span></div>
+                        <div class="stat-value" style="color:#9c27b0;font-size:22px;" id="periodTotalValue">${formatBytes(data.total_upload + data.total_download)}</div>
+                        <div class="stat-sub" id="periodLabel">上传 + 下载</div>
                     </div>
                     <div class="stat-card" style="border-left:3px solid #f44336;">
                         <div class="stat-icon">🚫</div>
@@ -660,7 +1052,7 @@
 
         function renderDeviceTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const filter = document.getElementById('filterSelect').value;
+            const filter = getCustomSelectValue('filterSelect');
             const tbody = document.getElementById('deviceTableBody');
 
             let filtered = allDevices.filter(d => {
@@ -812,12 +1204,15 @@
                         <div class="info-item">
                             <div class="info-label">连接频段</div>
                             <div class="info-value">
-                                <select onchange="setDeviceBand('${d.mac}', this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;font-size:12px;">
-                                    <option value="unknown" ${d.wifi_band==='unknown'?'selected':''}>未知</option>
-                                    <option value="2.4g" ${d.wifi_band==='2.4g'?'selected':''}>2.4GHz WiFi</option>
-                                    <option value="5g" ${d.wifi_band==='5g'?'selected':''}>5GHz WiFi</option>
-                                    <option value="wired" ${d.wifi_band==='wired'?'selected':''}>有线连接</option>
-                                </select>
+                                <div class="custom-select" id="bandSelect_${d.mac.replace(/:/g,'')}">
+                                    <div class="custom-select-trigger" onclick="toggleCustomSelect('bandSelect_${d.mac.replace(/:/g,'')}')" style="padding:4px 24px 4px 8px;font-size:12px;">${d.wifi_band=='unknown'?'未知':d.wifi_band=='2.4g'?'2.4GHz WiFi':d.wifi_band=='5g'?'5GHz WiFi':'有线连接'}</div>
+                                    <div class="custom-select-options">
+                                        <div class="custom-select-option ${d.wifi_band=='unknown'?'selected':''}" onclick="selectBandOption('${d.mac}','unknown','未知')">未知</div>
+                                        <div class="custom-select-option ${d.wifi_band=='2.4g'?'selected':''}" onclick="selectBandOption('${d.mac}','2.4g','2.4GHz WiFi')">2.4GHz WiFi</div>
+                                        <div class="custom-select-option ${d.wifi_band=='5g'?'selected':''}" onclick="selectBandOption('${d.mac}','5g','5GHz WiFi')">5GHz WiFi</div>
+                                        <div class="custom-select-option ${d.wifi_band=='wired'?'selected':''}" onclick="selectBandOption('${d.mac}','wired','有线连接')">有线连接</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="info-item"><div class="info-label">首次发现</div><div class="info-value" style="font-size:13px;">${d.first_seen_str || '-'}</div></div>
@@ -1109,7 +1504,7 @@
         let rankingDays = 7;
         async function loadRanking() {
             try {
-                const sort = document.getElementById('rankingSort').value;
+                const sort = getCustomSelectValue('rankingSort');
                 const res = await fetch(`/api/traffic-ranking?days=${rankingDays}&sort=${sort}`);
                 const data = await res.json();
                 const ranking = data.ranking;
@@ -1297,6 +1692,107 @@
         function updateTime() {
             document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN');
         }
+
+        // ============================================================
+        // 周期流量统计功能
+        // ============================================================
+
+        function openPeriodModal() {
+            document.getElementById('periodModal').style.display = 'flex';
+            loadPeriodData();
+        }
+
+        function closePeriodModal() {
+            document.getElementById('periodModal').style.display = 'none';
+        }
+
+        function onPeriodTypeChange() {
+            const type = document.querySelector('input[name="periodType"]:checked').value;
+            document.getElementById('customDaysInput').style.display = type === 'custom' ? 'flex' : 'none';
+        }
+
+        async function loadPeriodData() {
+            try {
+                const res = await fetch('/api/period-summary');
+                const data = await res.json();
+
+                // 更新当前周期
+                document.getElementById('currentPeriodLabel').textContent = data.current.period_label + ' 流量统计';
+                document.getElementById('currentUpload').textContent = data.current.total_upload_str;
+                document.getElementById('currentDownload').textContent = data.current.total_download_str;
+                document.getElementById('currentTotal').textContent = data.current.total_str;
+                document.getElementById('currentPeriodTime').textContent = '开始时间：' + data.current.start_time_str;
+
+                // 更新设置
+                const type = data.settings.period_type;
+                document.querySelector(`input[name="periodType"][value="${type}"]`).checked = true;
+                document.getElementById('customDaysInput').style.display = type === 'custom' ? 'flex' : 'none';
+                document.getElementById('customDays').value = data.settings.custom_days;
+
+                // 更新历史
+                const historyList = document.getElementById('periodHistoryList');
+                if (data.history && data.history.length > 0) {
+                    historyList.innerHTML = data.history.map(p => `
+                        <div class="period-history-item ${p.is_current ? 'current' : ''}">
+                            <div>
+                                <div class="period-history-label">${p.period_label} ${p.is_current ? '(当前)' : ''}</div>
+                                <div class="period-history-time">${p.start_time_str || '-'} ${p.end_time_str ? '~ ' + p.end_time_str : '至今'}</div>
+                            </div>
+                            <div class="period-history-traffic">${p.total_str || '0 B'}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    historyList.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">暂无历史数据</div>';
+                }
+
+                // 更新仪表盘上的总流量显示
+                document.getElementById('periodTotalValue').textContent = data.current.total_str;
+                document.getElementById('periodLabel').textContent = data.current.period_label + ' · 上传 + 下载';
+            } catch(e) {
+                console.error('加载周期数据失败:', e);
+            }
+        }
+
+        async function savePeriodSettings() {
+            const type = document.querySelector('input[name="periodType"]:checked').value;
+            const customDays = parseInt(document.getElementById('customDays').value) || 30;
+
+            try {
+                const res = await fetch('/api/period-settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({period_type: type, custom_days: customDays})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('周期设置已保存，流量已清零');
+                    loadPeriodData();
+                }
+            } catch(e) {
+                console.error('保存周期设置失败:', e);
+                alert('保存失败');
+            }
+        }
+
+        async function resetPeriod() {
+            if (!confirm('确定要立即清零当前周期的流量统计吗？')) return;
+            try {
+                const res = await fetch('/api/period-reset', {method: 'POST'});
+                const data = await res.json();
+                if (data.success) {
+                    alert('流量已清零');
+                    loadPeriodData();
+                }
+            } catch(e) {
+                console.error('清零失败:', e);
+                alert('清零失败');
+            }
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('periodModal').addEventListener('click', function(e) {
+            if (e.target === this) closePeriodModal();
+        });
 
         // 初始化
         async function init() {
