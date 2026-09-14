@@ -114,6 +114,28 @@ def init_db():
         )
     """)
 
+    # 系统设置表
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+
+    # 周期流量统计表
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS traffic_periods (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            period_type TEXT NOT NULL,
+            period_label TEXT NOT NULL,
+            start_time INTEGER NOT NULL,
+            end_time INTEGER,
+            total_upload INTEGER DEFAULT 0,
+            total_download INTEGER DEFAULT 0,
+            is_current INTEGER DEFAULT 0
+        )
+    """)
+
     # 索引
     c.execute("CREATE INDEX IF NOT EXISTS idx_devices_mac ON devices(mac)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_devices_online ON devices(is_online)")
@@ -447,3 +469,227 @@ def get_traffic_ranking(days=7, limit=20):
     ranking = [dict(row) for row in c.fetchall()]
     conn.close()
     return ranking
+
+
+# ============================================================
+# 周期流量统计相关函数
+# ============================================================
+
+def get_setting(key, default=None):
+    """获取系统设置"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key=?", (key,))
+    row = c.fetchone()
+    conn.close()
+    return row['value'] if row else default
+
+def set_setting(key, value):
+    """设置系统配置"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, str(value)))
+    conn.commit()
+    conn.close()
+
+def get_period_settings():
+    """获取周期统计设置"""
+    period_type = get_setting('period_type', 'monthly')
+    custom_days = int(get_setting('period_custom_days', '30'))
+    return {
+        'period_type': period_type,
+        'custom_days': custom_days,
+        'period_label': {
+            'monthly': '每月',
+            'quarterly': '每季度',
+            'yearly': '每年',
+            'custom': f'每{custom_days}天'
+        }.get(period_type, '每月')
+    }
+
+def set_period_settings(period_type, custom_days=30):
+    """设置周期统计类型"""
+    set_setting('period_type', period_type)
+    set_setting('period_custom_days', str(custom_days))
+    # 重置当前周期
+    reset_current_period(period_type, custom_days)
+    return get_period_settings()
+
+def get_period_start_time(period_type='monthly', custom_days=30):
+    """计算当前周期的开始时间"""
+    import time
+    from datetime import datetime, timedelta
+
+    now = datetime.now()
+
+    if period_type == 'monthly':
+        # 本月1号
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period_type == 'quarterly':
+        # 本季度第一天
+        quarter_month = ((now.month - 1) // 3) * 3 + 1
+        start = now.replace(month=quarter_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period_type == 'yearly':
+        # 今年1月1号
+        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period_type == 'custom':
+        # 从设置的开始日期计算
+        custom_start = get_setting('period_custom_start', None)
+        if custom_start:
+            start = datetime.fromtimestamp(int(custom_start))
+        else:
+            start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            set_setting('period_custom_start', str(int(start.timestamp())))
+    else:
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    return int(start.timestamp())
+
+def get_period_label(period_type='monthly', timestamp=None):
+    """获取周期标签"""
+    from datetime import datetime
+
+    if timestamp is None:
+        timestamp = get_period_start_time(period_type)
+
+    dt = datetime.fromtimestamp(timestamp)
+
+    if period_type == 'monthly':
+        return dt.strftime('%Y年%m月')
+    elif period_type == 'quarterly':
+        quarter = (dt.month - 1) // 3 + 1
+        return f'{dt.year}年第{quarter}季度'
+    elif period_type == 'yearly':
+        return f'{dt.year}年'
+    elif period_type == 'custom':
+        custom_days = int(get_setting('period_custom_days', '30'))
+        return f'自定义周期({custom_days}天)'
+    else:
+        return dt.strftime('%Y年%m月')
+
+def get_current_period():
+    """获取当前周期信息"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM traffic_periods WHERE is_current=1 ORDER BY id DESC LIMIT 1")
+    row = c.fetchone()
+    conn.close()
+
+    if row:
+        return dict(row)
+    return None
+
+def reset_current_period(period_type='monthly', custom_days=30):
+    """重置当前周期（清零设备流量，开始新周期）"""
+    import time
+    conn = get_db()
+    c = conn.cursor()
+
+    # 先把当前周期标记为已结束
+    c.execute("UPDATE traffic_periods SET is_current=0, end_time=? WHERE is_current=1", (int(time.time()),))
+
+    # 清零所有设备的累计流量
+    c.execute("UPDATE devices SET total_upload=0, total_download=0")
+
+    # 创建新周期
+    start_time = get_period_start_time(period_type, custom_days)
+    label = get_period_label(period_type, start_time)
+    c.execute("""
+        INSERT INTO traffic_periods (period_type, period_label, start_time, is_current)
+        VALUES (?, ?, ?, 1)
+    """, (period_type, label, start_time))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        'period_type': period_type,
+        'period_label': label,
+        'start_time': start_time
+    }
+
+def check_and_reset_period():
+    """检查是否需要进入新周期，如果需要则自动清零"""
+    import time
+    settings = get_period_settings()
+    period_type = settings['period_type']
+    custom_days = settings['custom_days']
+
+    current = get_current_period()
+    expected_start = get_period_start_time(period_type, custom_days)
+
+    # 如果没有当前周期，或者当前周期开始时间与预期不符，说明需要重置
+    if current is None or current['start_time'] != expected_start:
+        # 保存上一周期的流量
+        if current:
+            conn = get_db()
+            c = conn.cursor()
+            # 汇总当前所有设备的流量作为上一周期的总流量
+            c.execute("SELECT COALESCE(SUM(total_upload),0) as up, COALESCE(SUM(total_download),0) as down FROM devices")
+            row = c.fetchone()
+            c.execute("UPDATE traffic_periods SET total_upload=?, total_download=?, end_time=? WHERE id=?",
+                      (row['up'], row['down'], int(time.time()), current['id']))
+            conn.commit()
+            conn.close()
+
+        # 重置开始新周期
+        reset_current_period(period_type, custom_days)
+        return True
+
+    return False
+
+def get_period_history(limit=12):
+    """获取历史周期流量统计"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT period_type, period_label, start_time, end_time, total_upload, total_download, is_current
+        FROM traffic_periods
+        ORDER BY start_time DESC
+        LIMIT ?
+    """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+def update_period_traffic():
+    """更新当前周期的总流量（在每次统计时调用）"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT COALESCE(SUM(total_upload),0) as up, COALESCE(SUM(total_download),0) as down FROM devices")
+    row = c.fetchone()
+    c.execute("UPDATE traffic_periods SET total_upload=?, total_download=? WHERE is_current=1",
+              (row['up'], row['down']))
+    conn.commit()
+    conn.close()
+
+def get_period_summary():
+    """获取周期统计概览（用于API返回）"""
+    settings = get_period_settings()
+    current = get_current_period()
+    history = get_period_history(12)
+
+    # 确保当前周期存在
+    if current is None:
+        reset_current_period(settings['period_type'], settings['custom_days'])
+        current = get_current_period()
+
+    # 获取当前累计流量
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT COALESCE(SUM(total_upload),0) as up, COALESCE(SUM(total_download),0) as down FROM devices")
+    row = c.fetchone()
+    conn.close()
+
+    return {
+        'settings': settings,
+        'current': {
+            'period_type': current['period_type'] if current else settings['period_type'],
+            'period_label': current['period_label'] if current else get_period_label(settings['period_type']),
+            'start_time': current['start_time'] if current else get_period_start_time(settings['period_type']),
+            'total_upload': row['up'],
+            'total_download': row['down'],
+            'total': row['up'] + row['down']
+        },
+        'history': history
+    }
