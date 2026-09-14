@@ -51,6 +51,7 @@ def format_bytes(bytes_val):
     else:
         return f"{bytes_val/(1024*1024*1024):.2f} GB"
 
+
 def format_rate(rate_kbps):
     """格式化速率"""
     if rate_kbps is None:
@@ -447,6 +448,10 @@ def main():
     # 初始化设备管理系统
     print("[Init] 初始化设备管理系统...")
     init_device_manager()
+
+    # 自动开启全局流量监控（默认开启）
+    print("[Init] 自动开启全局流量监控...")
+    start_global_spoof()
 
     # 启动Web服务
     print(f"[Init] Web服务启动: http://{WEB_HOST}:{WEB_PORT}")
