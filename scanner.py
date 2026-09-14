@@ -64,7 +64,6 @@ def read_arp_table():
                 if mac_idx < len(parts):
                     mac = parts[mac_idx]
                     if mac and mac != '00:00:00:00:00:00':
-                        # 优先使用IPv4地址，如果已经有IPv4就不用IPv6覆盖
                         is_ipv4 = '.' in ip and ':' not in ip
                         if mac not in devices or is_ipv4:
                             devices[mac] = ip
@@ -74,29 +73,51 @@ def read_arp_table():
 
 
 def ping_scan():
-    """ping扫描整个网段（快速唤醒设备）"""
+    """ping扫描所有网段（快速唤醒设备）"""
     try:
-        # 用arping或者ping扫描
         result = subprocess.run(
             ["bash", "-c",
-             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.1.$i >/dev/null 2>&1 & done; wait"],
-            capture_output=True, text=True, timeout=15
+             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.1.$i >/dev/null 2>&1 & done; "
+             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.0.$i >/dev/null 2>&1 & done; wait"],
+            capture_output=True, text=True, timeout=20
         )
     except Exception as e:
         print(f"ping扫描失败: {e}")
+
+
+def scan_routed_devices():
+    """扫描路由网段设备（非直连，通过路由可达的设备）"""
+    routed = {}
+    try:
+        result = subprocess.run(
+            ["bash", "-c",
+             "for i in $(seq 1 254); do "
+             "  if ping -c 1 -W 1 192.168.0.$i >/dev/null 2>&1; then "
+             "    echo 192.168.0.$i; "
+             "  fi & "
+             "done; wait"],
+            capture_output=True, text=True, timeout=20
+        )
+        for line in result.stdout.strip().split('\n'):
+            ip = line.strip()
+            if ip and '.' in ip:
+                parts = ip.split('.')
+                virtual_mac = f"00:00:00:{int(parts[1]):02x}:{int(parts[2]):02x}:{int(parts[3]):02x}"
+                routed[virtual_mac] = ip
+    except Exception as e:
+        print(f"路由网段扫描失败: {e}")
+    return routed
 
 
 def add_self_device():
     """自动把自己（Orange Pi）添加到设备列表"""
     try:
         import socket
-        # 获取本机IP和MAC
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         local_ip = s.getsockname()[0]
         s.close()
-        
-        # 从/sys/class/net获取MAC
+
         mac = None
         for iface in ['eth0', 'wlan0']:
             try:
@@ -105,7 +126,7 @@ def add_self_device():
                     break
             except:
                 continue
-        
+
         if local_ip and mac:
             from database import upsert_device
             upsert_device(mac, local_ip, name='Orange Pi Zero2', vendor='Orange Pi')
@@ -116,26 +137,24 @@ def add_self_device():
 
 def scan_devices():
     """扫描所有设备"""
-    # 先添加自己
     add_self_device()
-    
-    # 先ping扫描唤醒设备
     ping_scan()
     time.sleep(1)
 
-    # 读取ARP表
     arp_devices = read_arp_table()
+    routed_devices = scan_routed_devices()
 
-    # 更新数据库
-    now = int(time.time())
     for mac, ip in arp_devices.items():
         vendor = get_vendor(mac)
         upsert_device(mac, ip, vendor=vendor)
 
-    # 检查离线设备
+    for mac, ip in routed_devices.items():
+        if mac not in arp_devices:
+            upsert_device(mac, ip, name='路由设备', vendor='跨网段设备')
+
     check_offline_devices()
 
-    return arp_devices
+    return {**arp_devices, **routed_devices}
 
 
 def check_offline_devices():
