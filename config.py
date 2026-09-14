@@ -26,8 +26,8 @@ MONITOR_INTERFACE = "eth0"   # 主要监控网口
 
 # 设备管理配置
 GATEWAY_IP = "192.168.1.1"           # 网关IP
-LOCAL_MAC = "f8:29:eb:6a:da:15"      # 本机wlan0 MAC地址
-MANAGE_INTERFACE = "wlan0"            # 设备管理网口（流量经过的接口）
+LOCAL_MAC = "02:00:ab:e1:aa:9d"      # 本机eth0 MAC地址
+MANAGE_INTERFACE = "eth0"            # 设备管理网口（流量经过的接口，必须与实际连接路由器的网口一致）
 
 # 流量统计
 TRAFFIC_CHAIN = "NETPULSE"   # iptables自定义链名
