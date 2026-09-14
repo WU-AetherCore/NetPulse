@@ -114,6 +114,7 @@ def init_db():
         )
     """)
 
+
     # 系统设置表
     c.execute("""
         CREATE TABLE IF NOT EXISTS settings (
@@ -579,14 +580,19 @@ def get_current_period():
         return dict(row)
     return None
 
-def reset_current_period(period_type='monthly', custom_days=30):
-    """重置当前周期（清零设备流量，开始新周期）"""
+def reset_current_period(period_type='monthly', custom_days=30, max_history=20):
+    """重置当前周期（清零设备流量，开始新周期）
+    max_history: 最多保留的历史周期数（包括当前周期），超过后自动删除最旧的
+    """
     import time
     conn = get_db()
     c = conn.cursor()
 
-    # 先把当前周期标记为已结束
-    c.execute("UPDATE traffic_periods SET is_current=0, end_time=? WHERE is_current=1", (int(time.time()),))
+    # 先保存当前周期的流量数据，再标记为已结束
+    c.execute("SELECT COALESCE(SUM(total_upload),0) as up, COALESCE(SUM(total_download),0) as down FROM devices")
+    row = c.fetchone()
+    c.execute("UPDATE traffic_periods SET total_upload=?, total_download=?, is_current=0, end_time=? WHERE is_current=1",
+              (row['up'], row['down'], int(time.time())))
 
     # 清零所有设备的累计流量
     c.execute("UPDATE devices SET total_upload=0, total_download=0")
@@ -599,6 +605,17 @@ def reset_current_period(period_type='monthly', custom_days=30):
         VALUES (?, ?, ?, 1)
     """, (period_type, label, start_time))
 
+    # 清理超过保留数量的旧历史记录（保留最近 max_history 个，包括当前周期）
+    c.execute("""
+        SELECT id FROM traffic_periods
+        ORDER BY start_time DESC, id DESC
+        LIMIT ?
+    """, (max_history,))
+    keep_ids = [row[0] for row in c.fetchall()]
+    if keep_ids:
+        placeholders = ','.join(['?'] * len(keep_ids))
+        c.execute(f"DELETE FROM traffic_periods WHERE id NOT IN ({placeholders})", keep_ids)
+
     conn.commit()
     conn.close()
 
@@ -610,7 +627,6 @@ def reset_current_period(period_type='monthly', custom_days=30):
 
 def check_and_reset_period():
     """检查是否需要进入新周期，如果需要则自动清零"""
-    import time
     settings = get_period_settings()
     period_type = settings['period_type']
     custom_days = settings['custom_days']
@@ -620,26 +636,14 @@ def check_and_reset_period():
 
     # 如果没有当前周期，或者当前周期开始时间与预期不符，说明需要重置
     if current is None or current['start_time'] != expected_start:
-        # 保存上一周期的流量
-        if current:
-            conn = get_db()
-            c = conn.cursor()
-            # 汇总当前所有设备的流量作为上一周期的总流量
-            c.execute("SELECT COALESCE(SUM(total_upload),0) as up, COALESCE(SUM(total_download),0) as down FROM devices")
-            row = c.fetchone()
-            c.execute("UPDATE traffic_periods SET total_upload=?, total_download=?, end_time=? WHERE id=?",
-                      (row['up'], row['down'], int(time.time()), current['id']))
-            conn.commit()
-            conn.close()
-
-        # 重置开始新周期
+        # reset_current_period 会自动保存当前周期流量并清理旧历史
         reset_current_period(period_type, custom_days)
         return True
 
     return False
 
-def get_period_history(limit=12):
-    """获取历史周期流量统计"""
+def get_period_history(limit=20):
+    """获取历史周期流量统计（默认返回最近20个）"""
     conn = get_db()
     c = conn.cursor()
     c.execute("""
@@ -667,7 +671,7 @@ def get_period_summary():
     """获取周期统计概览（用于API返回）"""
     settings = get_period_settings()
     current = get_current_period()
-    history = get_period_history(12)
+    history = get_period_history(20)
 
     # 确保当前周期存在
     if current is None:
