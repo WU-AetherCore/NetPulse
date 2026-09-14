@@ -119,7 +119,8 @@ def api_period_settings():
         data = request.get_json() or {}
         period_type = data.get('period_type', 'monthly')
         custom_days = int(data.get('custom_days', 30))
-        settings = set_period_settings(period_type, custom_days)
+        auto_reset = data.get('auto_reset', True)
+        settings = set_period_settings(period_type, custom_days, auto_reset)
         return jsonify({'success': True, 'settings': settings})
     else:
         return jsonify(get_period_settings())
