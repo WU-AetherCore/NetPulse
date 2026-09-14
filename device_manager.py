@@ -216,6 +216,7 @@ def get_blocked_devices():
                     blocked.add(parts[3].split('/')[0])
     return list(blocked)
 
+
 # ============================================================
 # tc 限速模块
 # ============================================================
@@ -321,6 +322,7 @@ def get_limited_devices():
                     limited.append({'class': parts[2], 'rate': rate})
     return limited
 
+
 # ============================================================
 # 系统初始化
 # ============================================================
@@ -368,6 +370,7 @@ def cleanup_device_manager():
     run_sudo("sysctl -w net.ipv4.ip_forward=0")
 
     print("[Cleanup] 设备管理系统已清理")
+
 
 # ============================================================
 # 全局ARP欺骗模块 - 让所有设备流量自动经过Orange Pi
@@ -426,12 +429,12 @@ def _global_spoof_loop():
                 if gateway_mac:
                     send_arp_reply(GATEWAY_IP, gateway_mac, ip, LOCAL_MAC, MANAGE_INTERFACE)
 
-            # 每3秒发送一次（平衡效果和性能）
-            time.sleep(3)
+            # 每5秒发送一次（平衡效果和性能，减少网络开销）
+            time.sleep(5)
 
         except Exception as e:
             print(f"[GlobalSpoof] 欺骗循环错误: {e}")
-            time.sleep(3)
+            time.sleep(5)
 
     print("[GlobalSpoof] 全局ARP欺骗线程已停止")
 
