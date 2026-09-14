@@ -9,7 +9,7 @@ import re
 from config import TRAFFIC_CHAIN, TRAFFIC_INTERVAL
 from database import (
     get_all_devices, update_traffic, update_current_rates,
-    record_connection_event
+    record_connection_event, update_period_traffic, check_and_reset_period
 )
 
 
@@ -121,6 +121,7 @@ class TrafficMonitor(threading.Thread):
         # 滑动窗口：保存最近5次的速率样本，用于计算平均速率
         self.rate_history = {}  # {mac: [upload_rates], [download_rates]}
         self.max_history = 5
+        self.period_check_counter = 0  # 周期检查计数器
 
     def run(self):
         print(f"[Traffic] 流量监控线程启动，间隔{self.interval}秒")
@@ -188,6 +189,22 @@ class TrafficMonitor(threading.Thread):
 
         self.last_counters = current_counters
         self.last_read_time = now
+
+        # 周期流量统计：更新当前周期流量
+        try:
+            update_period_traffic()
+        except Exception as e:
+            pass
+
+        # 每 1200 次循环（约1小时，间隔3秒）检查一次是否需要重置周期
+        self.period_check_counter += 1
+        if self.period_check_counter >= 1200:
+            self.period_check_counter = 0
+            try:
+                if check_and_reset_period():
+                    print("[Traffic] 检测到新周期，已自动清零流量统计")
+            except Exception as e:
+                print(f"[Traffic] 周期检查异常: {e}")
 
     def stop(self):
         self.running = False
