@@ -13,15 +13,15 @@
 
 | 仪表盘 | 设备列表 |
 |--------|----------|
-| ![仪表盘](screenshots/01_dashboard.png) | ![设备列表](screenshots/02_devices.png) |
+| ![仪表盘](01_dashboard.png) | ![设备列表](02_devices.png) |
 
 | 设备详情 | 流量排行 |
 |----------|----------|
-| ![设备详情](screenshots/03_device_detail.png) | ![流量排行](screenshots/04_ranking.png) |
+| ![设备详情](03_device_detail.png) | ![流量排行](04_ranking.png) |
 
 | 浏览记录 | AdGuard Home |
 |----------|--------------|
-| ![浏览记录](screenshots/05_browsing.png) | ![AdGuard Home](screenshots/06_adguard.png) |
+| ![浏览记录](05_browsing.png) | ![AdGuard Home](06_adguard.png) |
 
 ---
 
@@ -759,13 +759,12 @@ NetPulse/
 ├── install.sh          # 一键安装脚本
 ├── templates/
 │   └── index.html      # Web前端界面
-├── screenshots/        # 界面截图
-│   ├── 01_dashboard.png
-│   ├── 02_devices.png
-│   ├── 03_device_detail.png
-│   ├── 04_ranking.png
-│   ├── 05_browsing.png
-│   └── 06_adguard.png
+├── 01_dashboard.png    # 界面截图-仪表盘
+├── 02_devices.png      # 界面截图-设备列表
+├── 03_device_detail.png # 界面截图-设备详情
+├── 04_ranking.png      # 界面截图-流量排行
+├── 05_browsing.png     # 界面截图-浏览记录
+├── 06_adguard.png      # 界面截图-AdGuard Home
 └── README.md           # 说明文档
 ```
 
