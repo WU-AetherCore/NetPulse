@@ -36,6 +36,11 @@ app.config['JSON_AS_ASCII'] = False
 scanner = None
 traffic_monitor = None
 
+# 缓存机制
+_browsing_cache = {'data': None, 'time': 0, 'limit': 0}
+_adguard_stats_cache = {'data': None, 'time': 0}
+CACHE_TTL = 5
+
 
 def format_bytes(bytes_val):
     if bytes_val is None:
@@ -333,21 +338,26 @@ def api_traffic_ranking():
 
 
 # ============================================================
-# 浏览记录（DNS查询日志，包含所有访问域名）
+# 浏览记录（DNS查询日志）+ AdGuard Home 统计
 # ============================================================
 
 @app.route('/api/browsing-history')
 def api_browsing_history():
-    """获取设备浏览记录（从AdGuard Home查询日志，包含所有访问域名）"""
+    """获取设备浏览记录（从AdGuard Home查询日志，包含所有访问域名，带缓存）"""
     import urllib.request
-    limit = request.args.get('limit', 5000, type=int)
+    limit = request.args.get('limit', 3000, type=int)
     device_ip = request.args.get('ip', None)
+
+    now = time.time()
+    if not device_ip and _browsing_cache['data'] and _browsing_cache['limit'] == limit and (now - _browsing_cache['time']) < CACHE_TTL:
+        return jsonify(_browsing_cache['data'])
+
     try:
         url = f"http://127.0.0.1:3000/control/querylog?limit={limit}"
         if device_ip:
             url += f"&client={device_ip}"
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode('utf-8'))
     except Exception as e:
         return jsonify({"error": f"获取AdGuard日志失败: {str(e)}"}), 500
@@ -365,6 +375,8 @@ def api_browsing_history():
         for ans in item.get('answer', []):
             if ans.get('type') in ('A', 'AAAA'):
                 answer_ips.append(ans.get('value', ''))
+                if len(answer_ips) >= 2:
+                    break
         elapsed = item.get('elapsedMs', 0)
 
         if client not in devices:
@@ -386,7 +398,7 @@ def api_browsing_history():
                 if ip:
                     devices[client]['domains'][clean_domain]['ips'].add(ip)
 
-        if len(devices[client]['recent']) < 50:
+        if len(devices[client]['recent']) < 30:
             devices[client]['recent'].append({
                 'domain': clean_domain, 'type': qtype, 'blocked': blocked,
                 'time': timestamp, 'status': status, 'reason': reason,
@@ -394,24 +406,76 @@ def api_browsing_history():
             })
 
     result = []
+    total_q = 0
     for ip, info in devices.items():
+        total_q += info['total_queries']
         sorted_domains = sorted(info['domains'].items(), key=lambda x: x[1]['count'], reverse=True)
         info['top_domains'] = []
-        for d, stats in sorted_domains[:100]:
+        for d, stats in sorted_domains[:80]:
             info['top_domains'].append({
                 'domain': d, 'count': stats['count'], 'blocked': stats['blocked'],
                 'last_time': stats['last_time'], 'types': list(stats['types']),
-                'ips': list(stats['ips'])[:5]
+                'ips': list(stats['ips'])[:3]
             })
         del info['domains']
         result.append(info)
 
     result.sort(key=lambda x: x['total_queries'], reverse=True)
-    return jsonify({
-        'total_devices': len(result),
-        'total_queries': sum(d['total_queries'] for d in result),
-        'devices': result
-    })
+    resp_data = {'total_devices': len(result), 'total_queries': total_q, 'devices': result}
+
+    if not device_ip:
+        _browsing_cache['data'] = resp_data
+        _browsing_cache['time'] = now
+        _browsing_cache['limit'] = limit
+
+    return jsonify(resp_data)
+
+
+@app.route('/api/adguard-stats')
+def api_adguard_stats():
+    """获取 AdGuard Home 统计数据（带缓存）"""
+    import urllib.request
+    now = time.time()
+    if _adguard_stats_cache['data'] and (now - _adguard_stats_cache['time']) < CACHE_TTL:
+        return jsonify(_adguard_stats_cache['data'])
+
+    try:
+        req = urllib.request.Request("http://127.0.0.1:3000/control/stats")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+    except Exception as e:
+        return jsonify({"error": f"获取AdGuard统计失败: {str(e)}"}), 500
+
+    result = {
+        'num_dns_queries': data.get('num_dns_queries', 0),
+        'num_blocked_filtering': data.get('num_blocked_filtering', 0),
+        'num_replaced_safebrowsing': data.get('num_replaced_safebrowsing', 0),
+        'num_replaced_parental': data.get('num_replaced_parental', 0),
+        'num_replaced_safesearch': data.get('num_replaced_safesearch', 0),
+        'avg_processing_time': data.get('avg_processing_time', 0),
+        'top_queried_domains': [],
+        'top_clients': [],
+        'top_blocked_domains': [],
+    }
+
+    for item in data.get('top_queried_domains', []):
+        for domain, count in item.items():
+            result['top_queried_domains'].append({'domain': domain, 'count': count})
+    for item in data.get('top_clients', []):
+        for client, count in item.items():
+            result['top_clients'].append({'client': client, 'count': count})
+    for item in data.get('top_blocked_domains', []):
+        for domain, count in item.items():
+            result['top_blocked_domains'].append({'domain': domain, 'count': count})
+
+    if result['num_dns_queries'] > 0:
+        result['block_rate'] = round(result['num_blocked_filtering'] / result['num_dns_queries'] * 100, 1)
+    else:
+        result['block_rate'] = 0
+
+    _adguard_stats_cache['data'] = result
+    _adguard_stats_cache['time'] = now
+    return jsonify(result)
 
 
 # ============================================================
