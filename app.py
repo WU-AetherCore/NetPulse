@@ -333,21 +333,21 @@ def api_traffic_ranking():
 
 
 # ============================================================
-# 浏览记录（DNS查询日志）
+# 浏览记录（DNS查询日志，包含所有访问域名）
 # ============================================================
 
 @app.route('/api/browsing-history')
 def api_browsing_history():
-    """获取设备浏览记录（从AdGuard Home查询日志）"""
+    """获取设备浏览记录（从AdGuard Home查询日志，包含所有访问域名）"""
     import urllib.request
-    limit = request.args.get('limit', 500, type=int)
+    limit = request.args.get('limit', 5000, type=int)
     device_ip = request.args.get('ip', None)
     try:
         url = f"http://127.0.0.1:3000/control/querylog?limit={limit}"
         if device_ip:
             url += f"&client={device_ip}"
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode('utf-8'))
     except Exception as e:
         return jsonify({"error": f"获取AdGuard日志失败: {str(e)}"}), 500
@@ -359,32 +359,59 @@ def api_browsing_history():
         qtype = item.get('question', {}).get('type', '')
         status = item.get('status', '')
         reason = item.get('reason', '')
-        blocked = 'Filtered' in reason or status == 'REFUSED'
+        blocked = reason.startswith('Filtered') or status == 'REFUSED'
         timestamp = item.get('time', '')
+        answer_ips = []
+        for ans in item.get('answer', []):
+            if ans.get('type') in ('A', 'AAAA'):
+                answer_ips.append(ans.get('value', ''))
+        elapsed = item.get('elapsedMs', 0)
+
         if client not in devices:
             devices[client] = {'ip': client, 'total_queries': 0, 'blocked_count': 0, 'domains': {}, 'recent': []}
         devices[client]['total_queries'] += 1
         if blocked:
             devices[client]['blocked_count'] += 1
+
         clean_domain = domain.rstrip('.').lower()
-        if clean_domain and qtype in ('A', 'AAAA'):
+        if clean_domain:
             if clean_domain not in devices[client]['domains']:
-                devices[client]['domains'][clean_domain] = {'count': 0, 'blocked': 0, 'last_time': ''}
+                devices[client]['domains'][clean_domain] = {'count': 0, 'blocked': 0, 'last_time': '', 'types': set(), 'ips': set()}
             devices[client]['domains'][clean_domain]['count'] += 1
             if blocked:
                 devices[client]['domains'][clean_domain]['blocked'] += 1
             devices[client]['domains'][clean_domain]['last_time'] = timestamp
-        if len(devices[client]['recent']) < 20:
-            devices[client]['recent'].append({'domain': clean_domain, 'type': qtype, 'blocked': blocked, 'time': timestamp})
+            devices[client]['domains'][clean_domain]['types'].add(qtype)
+            for ip in answer_ips:
+                if ip:
+                    devices[client]['domains'][clean_domain]['ips'].add(ip)
+
+        if len(devices[client]['recent']) < 50:
+            devices[client]['recent'].append({
+                'domain': clean_domain, 'type': qtype, 'blocked': blocked,
+                'time': timestamp, 'status': status, 'reason': reason,
+                'answer_ips': answer_ips, 'elapsed_ms': elapsed
+            })
 
     result = []
     for ip, info in devices.items():
         sorted_domains = sorted(info['domains'].items(), key=lambda x: x[1]['count'], reverse=True)
-        info['top_domains'] = [{'domain': d, **stats} for d, stats in sorted_domains[:50]]
+        info['top_domains'] = []
+        for d, stats in sorted_domains[:100]:
+            info['top_domains'].append({
+                'domain': d, 'count': stats['count'], 'blocked': stats['blocked'],
+                'last_time': stats['last_time'], 'types': list(stats['types']),
+                'ips': list(stats['ips'])[:5]
+            })
         del info['domains']
         result.append(info)
+
     result.sort(key=lambda x: x['total_queries'], reverse=True)
-    return jsonify({'total_devices': len(result), 'devices': result})
+    return jsonify({
+        'total_devices': len(result),
+        'total_queries': sum(d['total_queries'] for d in result),
+        'devices': result
+    })
 
 
 # ============================================================
