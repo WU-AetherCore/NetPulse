@@ -533,11 +533,11 @@
                 <div class="period-current">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                         <div class="period-current-title" id="currentPeriodLabel" style="margin:0;">本月流量统计</div>
-                        <select id="quickPeriodSelect" onchange="quickSetPeriod(this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;outline:none;">
-                            <option value="monthly" style="color:#333;">每月</option>
-                            <option value="quarterly" style="color:#333;">每季度</option>
-                            <option value="yearly" style="color:#333;">每年</option>
-                            <option value="custom" style="color:#333;">自定义</option>
+                        <select id="quickPeriodSelect" onchange="quickSetPeriod(this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;outline:none;color-scheme:dark;">
+                            <option value="monthly" style="background:#1a1a2e;color:#fff;">每月</option>
+                            <option value="quarterly" style="background:#1a1a2e;color:#fff;">每季度</option>
+                            <option value="yearly" style="background:#1a1a2e;color:#fff;">每年</option>
+                            <option value="custom" style="background:#1a1a2e;color:#fff;">自定义</option>
                         </select>
                     </div>
                     <div class="period-current-stats">
@@ -862,11 +862,11 @@
                         <div class="info-item">
                             <div class="info-label">连接频段</div>
                             <div class="info-value">
-                                <select onchange="setDeviceBand('${d.mac}', this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;outline:none;width:100%;">
-                                    <option value="unknown" ${d.wifi_band=='unknown'?'selected':''} style="color:#333;">未知</option>
-                                    <option value="2.4g" ${d.wifi_band=='2.4g'?'selected':''} style="color:#333;">2.4GHz WiFi</option>
-                                    <option value="5g" ${d.wifi_band=='5g'?'selected':''} style="color:#333;">5GHz WiFi</option>
-                                    <option value="wired" ${d.wifi_band=='wired'?'selected':''} style="color:#333;">有线连接</option>
+                                <select onchange="setDeviceBand('${d.mac}', this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;outline:none;width:100%;color-scheme:dark;">
+                                    <option value="unknown" ${d.wifi_band=='unknown'?'selected':''} style="background:#1a1a2e;color:#fff;">未知</option>
+                                    <option value="2.4g" ${d.wifi_band=='2.4g'?'selected':''} style="background:#1a1a2e;color:#fff;">2.4GHz WiFi</option>
+                                    <option value="5g" ${d.wifi_band=='5g'?'selected':''} style="background:#1a1a2e;color:#fff;">5GHz WiFi</option>
+                                    <option value="wired" ${d.wifi_band=='wired'?'selected':''} style="background:#1a1a2e;color:#fff;">有线连接</option>
                                 </select>
                             </div>
                         </div>
