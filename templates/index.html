@@ -414,7 +414,7 @@
                         <li>✅ 🚫 设备封禁（踢出网络，ARP欺骗+iptables DROP）</li>
                         <li>✅ ⏱️ 设备限速（tc HTB流量控制，可设上下行带宽）</li>
                         <li>✅ 📊 周期流量统计（每月/每季度/每年/自定义，支持自动清零）</li>
-                        <li>✅ 🌐 浏览记录（基于AdGuard Home DNS查询日志）</li>
+                        <li>✅ 🌐 浏览记录（基于AdGuard Home DNS查询日志，所有访问域名可查看）</li>
                         <li>✅ 🔧 自动健康检查与修复（ARP/NAT/iptables自动恢复）</li>
                     </ul>
                     <p style="margin-top:15px;">🔧 技术栈：Python Flask + SQLite + iptables + tc + ARP欺骗 + AdGuard Home + Chart.js</p>
@@ -552,6 +552,7 @@
 
     <script>
         let allDevices = [];
+        let browsingFilter = 'all';
         let trafficChart = null;
         let trafficHistory = [];
         let currentTab = 'dashboard';
@@ -1157,29 +1158,93 @@
             const content = document.getElementById('browsingContent');
             content.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">加载中...</p>';
             try {
-                const res = await fetch('/api/browsing-history?limit=1000');
+                const res = await fetch('/api/browsing-history?limit=5000');
                 const data = await res.json();
-                if (data.error) { content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">' + data.error + '</p>'; return; }
-                document.getElementById('browsingInfo').textContent = '共 ' + data.total_devices + ' 台设备';
-                if (!data.devices || data.devices.length === 0) { content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌐</div>暂无浏览记录</div>'; return; }
-                content.innerHTML = data.devices.map(function(dev, idx) {
+                if (data.error) {
+                    content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">' + data.error + '</p>';
+                    return;
+                }
+                document.getElementById('browsingInfo').textContent = '共 ' + data.total_devices + ' 台设备 | ' + (data.total_queries || 0) + ' 条查询';
+                if (!data.devices || data.devices.length === 0) {
+                    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌐</div>暂无浏览记录</div>';
+                    return;
+                }
+
+                const filterBar = '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+                    '<button class="tab-sub-btn ' + (browsingFilter==='all'?'active':'') + '" onclick="setBrowsingFilter(\'all\')">全部域名</button>' +
+                    '<button class="tab-sub-btn ' + (browsingFilter==='normal'?'active':'') + '" onclick="setBrowsingFilter(\'normal\')">正常访问</button>' +
+                    '<button class="tab-sub-btn ' + (browsingFilter==='blocked'?'active':'') + '" onclick="setBrowsingFilter(\'blocked\')">被拦截</button>' +
+                    '</div>';
+
+                content.innerHTML = filterBar + data.devices.map(function(dev, idx) {
                     var blockRate = dev.total_queries > 0 ? ((dev.blocked_count / dev.total_queries) * 100).toFixed(1) : 0;
-                    var topDomains = (dev.top_domains || []).slice(0, 15).map(function(d) {
-                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;">' +
-                            '<span style="font-family:monospace;' + (d.blocked > 0 ? 'color:#e74c3c;text-decoration:line-through;' : '') + '">' + d.domain + '</span>' +
-                            '<span style="color:#888;font-size:12px;">' + d.count + '次 ' + (d.blocked > 0 ? '🚫' + d.blocked : '') + '</span></div>';
+                    var devInfo = allDevices.find(function(d) { return d.ip === dev.ip; });
+                    var devName = devInfo ? (devInfo.name || devInfo.vendor || '未知设备') : '未知设备';
+
+                    var domains = (dev.top_domains || []).filter(function(d) {
+                        if (browsingFilter === 'blocked') return d.blocked > 0;
+                        if (browsingFilter === 'normal') return d.blocked === 0;
+                        return true;
+                    }).slice(0, 50);
+
+                    var domainList = domains.map(function(d) {
+                        var isBlocked = d.blocked > 0;
+                        var domainStyle = isBlocked ? 'color:#e74c3c;text-decoration:line-through;' : 'color:#64b5f6;';
+                        var ipList = (d.ips || []).length > 0 ? '<span style="color:#666;font-size:10px;margin-left:8px;">→ ' + d.ips.slice(0,2).join(', ') + '</span>' : '';
+                        var typeList = (d.types || []).length > 0 ? '<span style="color:#888;font-size:10px;margin-left:6px;">[' + d.types.join('/') + ']</span>' : '';
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;">' +
+                            '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">' +
+                            '<a href="http://' + d.domain + '" target="_blank" style="' + domainStyle + 'text-decoration:none;font-family:monospace;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">' + d.domain + '</a>' +
+                            typeList + ipList +
+                            '</div>' +
+                            '<div style="text-align:right;min-width:80px;">' +
+                            '<span style="color:#aaa;font-size:12px;">' + d.count + '次</span>' +
+                            (isBlocked ? '<span style="color:#e74c3c;font-size:11px;margin-left:6px;">🚫' + d.blocked + '</span>' : '') +
+                            '</div></div>';
                     }).join('');
+
+                    var recentList = (dev.recent || []).slice(0, 20).map(function(r) {
+                        var timeStr = r.time ? r.time.replace('T', ' ').substring(0, 19) : '';
+                        var rStyle = r.blocked ? 'color:#e74c3c;text-decoration:line-through;' : 'color:#64b5f6;';
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 12px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:12px;">' +
+                            '<a href="http://' + r.domain + '" target="_blank" style="' + rStyle + 'text-decoration:none;font-family:monospace;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + r.domain + '</a>' +
+                            '<span style="color:#666;font-size:10px;">' + timeStr + '</span></div>';
+                    }).join('');
+
                     return '<div style="margin-bottom:16px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;">' +
-                        '<div style="background:rgba(102,126,234,0.1);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="document.getElementById(\'browse-' + idx + '\').style.display=document.getElementById(\'browse-' + idx + '\').style.display===\'none\'?\'block\':\'none\'">' +
+                        '<div style="background:rgba(102,126,234,0.1);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="toggleBrowsingDetail(' + idx + ')">' +
                         '<span style="font-size:18px;">📱</span>' +
-                        '<div style="flex:1;"><div style="font-weight:600;">' + dev.ip + '</div>' +
-                        '<div style="font-size:11px;color:#888;">查询 ' + dev.total_queries + ' 次 | 拦截 ' + dev.blocked_count + ' 次 (' + blockRate + '%)</div></div>' +
-                        '<span style="color:#888;font-size:12px;">点击展开 ▼</span></div>' +
-                        '<div id="browse-' + idx + '" style="display:none;background:rgba(0,0,0,0.15);max-height:400px;overflow-y:auto;">' +
-                        (topDomains || '<p style="padding:20px;text-align:center;color:#666;">暂无域名记录</p>') +
+                        '<div style="flex:1;"><div style="font-weight:600;">' + devName + ' <span style="color:#888;font-size:12px;font-weight:400;">' + dev.ip + '</span></div>' +
+                        '<div style="font-size:11px;color:#888;">查询 ' + dev.total_queries + ' 次 | 拦截 ' + dev.blocked_count + ' 次 (' + blockRate + '%) | 访问域名 ' + (dev.top_domains || []).length + ' 个</div></div>' +
+                        '<span id="browse-arrow-' + idx + '" style="color:#888;font-size:12px;">点击展开 ▼</span></div>' +
+                        '<div id="browse-' + idx + '" style="display:none;background:rgba(0,0,0,0.15);">' +
+                        '<div style="padding:8px 12px;background:rgba(255,255,255,0.03);font-size:12px;color:#aaa;font-weight:600;">📊 访问域名排行（点击域名可跳转）</div>' +
+                        '<div style="max-height:300px;overflow-y:auto;">' + (domainList || '<p style="padding:20px;text-align:center;color:#666;">暂无域名记录</p>') + '</div>' +
+                        '<div style="padding:8px 12px;background:rgba(255,255,255,0.03);font-size:12px;color:#aaa;font-weight:600;margin-top:8px;">🕐 最近访问记录</div>' +
+                        '<div style="max-height:200px;overflow-y:auto;">' + (recentList || '<p style="padding:20px;text-align:center;color:#666;">暂无记录</p>') + '</div>' +
                         '</div></div>';
                 }).join('');
-            } catch(e) { content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">加载失败: ' + e.message + '</p>'; console.error('加载浏览记录失败:', e); }
+            } catch(e) {
+                content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">加载失败: ' + e.message + '</p>';
+                console.error('加载浏览记录失败:', e);
+            }
+        }
+
+        function setBrowsingFilter(filter) {
+            browsingFilter = filter;
+            loadBrowsingHistory();
+        }
+
+        function toggleBrowsingDetail(idx) {
+            var el = document.getElementById('browse-' + idx);
+            var arrow = document.getElementById('browse-arrow-' + idx);
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                arrow.textContent = '点击收起 ▲';
+            } else {
+                el.style.display = 'none';
+                arrow.textContent = '点击展开 ▼';
+            }
         }
 
         async function init() {
