@@ -408,17 +408,17 @@
                 </div>
                 <div class="card">
                     <div class="card-title"><span>👥 客户端排行</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
-                    <div id="adguardClients" style="max-height:300px;overflow-y:auto;"><div style="text-align:center;padding:30px;color:#888;">加载中...</div></div>
+                    <div id="adguardClients" style="max-height:300px;overflow-y:auto;padding-right:15px;"><div style="text-align:center;padding:30px;color:#888;">加载中...</div></div>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
                 <div class="card">
                     <div class="card-title"><span>🌐 请求域名排行</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
-                    <div id="adguardTopDomains" style="max-height:350px;overflow-y:auto;"><div style="text-align:center;padding:30px;color:#888;">加载中...</div></div>
+                    <div id="adguardTopDomains" style="max-height:350px;overflow-y:auto;padding-right:15px;"><div style="text-align:center;padding:30px;color:#888;">加载中...</div></div>
                 </div>
                 <div class="card">
                     <div class="card-title"><span>🚫 被拦截域名排行</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
-                    <div id="adguardBlockedDomains" style="max-height:350px;overflow-y:auto;"><div style="text-align:center;padding:30px;color:#888;">加载中...</div></div>
+                    <div id="adguardBlockedDomains" style="max-height:350px;overflow-y:auto;padding-right:15px;"><div style="text-align:center;padding:30px;color:#888;">加载中...</div></div>
                 </div>
             </div>
         </div>
@@ -668,21 +668,6 @@
             } catch(e) { alert('设置失败: ' + e.message); }
         }
 
-        function selectBandOption(mac, band, text) {
-            const selectId = 'bandSelect_' + mac.replace(/:/g,'');
-            const select = document.getElementById(selectId);
-            if (select) {
-                select.querySelector('.custom-select-trigger').textContent = text;
-                select.querySelectorAll('.custom-select-option').forEach(opt => opt.classList.remove('selected'));
-                const options = select.querySelectorAll('.custom-select-option');
-                options.forEach(opt => {
-                    if (opt.getAttribute('onclick').indexOf("'" + band + "'") !== -1) opt.classList.add('selected');
-                });
-                select.classList.remove('open');
-            }
-            setDeviceBand(mac, band);
-        }
-
         function switchTab(tab) {
             currentTab = tab;
             const tabs = ['dashboard','devices','ranking','browsing','adguard','events','about'];
@@ -877,15 +862,12 @@
                         <div class="info-item">
                             <div class="info-label">连接频段</div>
                             <div class="info-value">
-                                <div class="custom-select" id="bandSelect_${d.mac.replace(/:/g,'')}">
-                                    <div class="custom-select-trigger" onclick="toggleCustomSelect('bandSelect_${d.mac.replace(/:/g,'')}')" style="padding:4px 24px 4px 8px;font-size:12px;">${d.wifi_band=='unknown'?'未知':d.wifi_band=='2.4g'?'2.4GHz WiFi':d.wifi_band=='5g'?'5GHz WiFi':'有线连接'}</div>
-                                    <div class="custom-select-options">
-                                        <div class="custom-select-option ${d.wifi_band=='unknown'?'selected':''}" onclick="selectBandOption('${d.mac}','unknown','未知')">未知</div>
-                                        <div class="custom-select-option ${d.wifi_band=='2.4g'?'selected':''}" onclick="selectBandOption('${d.mac}','2.4g','2.4GHz WiFi')">2.4GHz WiFi</div>
-                                        <div class="custom-select-option ${d.wifi_band=='5g'?'selected':''}" onclick="selectBandOption('${d.mac}','5g','5GHz WiFi')">5GHz WiFi</div>
-                                        <div class="custom-select-option ${d.wifi_band=='wired'?'selected':''}" onclick="selectBandOption('${d.mac}','wired','有线连接')">有线连接</div>
-                                    </div>
-                                </div>
+                                <select onchange="setDeviceBand('${d.mac}', this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;outline:none;width:100%;">
+                                    <option value="unknown" ${d.wifi_band=='unknown'?'selected':''} style="color:#333;">未知</option>
+                                    <option value="2.4g" ${d.wifi_band=='2.4g'?'selected':''} style="color:#333;">2.4GHz WiFi</option>
+                                    <option value="5g" ${d.wifi_band=='5g'?'selected':''} style="color:#333;">5GHz WiFi</option>
+                                    <option value="wired" ${d.wifi_band=='wired'?'selected':''} style="color:#333;">有线连接</option>
+                                </select>
                             </div>
                         </div>
                         <div class="info-item"><div class="info-label">首次发现</div><div class="info-value" style="font-size:13px;">${d.first_seen_str || '-'}</div></div>
