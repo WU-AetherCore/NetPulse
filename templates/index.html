@@ -25,41 +25,26 @@
             top: 0;
             z-index: 100;
         }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .logo { display: flex; align-items: center; gap: 12px; }
         .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 20px;
         }
         .logo-text h1 { font-size: 18px; font-weight: 600; }
         .logo-text p { font-size: 12px; color: #888; }
         .header-right { display: flex; align-items: center; gap: 15px; }
         .status-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            background: rgba(76, 175, 80, 0.2);
-            color: #4caf50;
+            padding: 5px 12px; border-radius: 20px; font-size: 12px;
+            background: rgba(76, 175, 80, 0.2); color: #4caf50;
             border: 1px solid rgba(76, 175, 80, 0.3);
         }
         .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s;
-            background: rgba(255,255,255,0.1);
-            color: #e0e0e0;
+            padding: 8px 16px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; transition: all 0.3s;
+            background: rgba(255,255,255,0.1); color: #e0e0e0;
         }
         .btn:hover { background: rgba(255,255,255,0.2); }
         .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
@@ -73,54 +58,29 @@
         .btn-warning:hover { background: rgba(255, 152, 0, 0.3); }
         .btn-info { background: rgba(33, 150, 243, 0.2); color: #2196f3; border: 1px solid rgba(33, 150, 243, 0.3); }
         .btn-info:hover { background: rgba(33, 150, 243, 0.3); }
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 600;
-        }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
         .badge-danger { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.3); }
         .badge-warning { background: rgba(255, 152, 0, 0.2); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.3); }
         .container { padding: 25px 30px; max-width: 1600px; margin: 0 auto; }
         .nav-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            background: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-radius: 12px;
-            overflow-x: auto;
+            display: flex; gap: 10px; margin-bottom: 25px;
+            background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; overflow-x: auto;
         }
         .nav-tab {
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            white-space: nowrap;
-            transition: all 0.3s;
-            border: none;
-            background: transparent;
-            color: #aaa;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;
+            white-space: nowrap; transition: all 0.3s; border: none;
+            background: transparent; color: #aaa;
         }
-        .nav-tab.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
+        .nav-tab.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .nav-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
-            margin-bottom: 25px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px; margin-bottom: 25px;
         }
         .stat-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 20px;
-            transition: transform 0.3s;
+            background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+            padding: 20px; transition: transform 0.3s;
         }
         .stat-card:hover { transform: translateY(-3px); }
         .stat-label { font-size: 13px; color: #888; margin-bottom: 8px; }
@@ -128,39 +88,23 @@
         .stat-sub { font-size: 12px; color: #666; margin-top: 5px; }
         .stat-icon { float: right; font-size: 30px; opacity: 0.5; }
         .card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
+            background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+            padding: 20px; margin-bottom: 20px;
         }
         .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            font-size: 16px; font-weight: 600; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .device-table { width: 100%; border-collapse: collapse; }
         .device-table th {
-            text-align: left;
-            padding: 12px;
-            font-size: 11px;
-            color: #888;
-            text-transform: uppercase;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.02);
-            position: sticky;
-            top: 0;
-            z-index: 1;
+            text-align: left; padding: 12px; font-size: 11px; color: #888;
+            text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.02); position: sticky; top: 0; z-index: 1;
         }
         .device-table td {
-            padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 13px;
-            transition: all 0.2s ease;
+            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px; transition: all 0.2s ease;
         }
         .device-table tr { transition: background 0.2s ease; }
         .device-table tr:hover { background: rgba(102,126,234,0.08); }
@@ -168,13 +112,7 @@
         .device-name { font-weight: 600; cursor: pointer; transition: color 0.2s; }
         .device-name:hover { color: #667eea; }
         .device-mac { font-size: 11px; color: #666; font-family: monospace; }
-        .online-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
+        .online-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
         .online { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
         .offline { background: #666; }
         .rate-up { color: #ff9800; }
@@ -182,357 +120,135 @@
         .chart-container { position: relative; height: 300px; margin: 15px 0; }
         .event-list { max-height: 500px; overflow-y: auto; }
         .event-item {
-            padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .event-type {
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-        }
+        .event-type { padding: 3px 10px; border-radius: 12px; font-size: 11px; }
         .event-first_seen { background: rgba(103, 126, 234, 0.2); color: #667eea; }
         .event-disconnect { background: rgba(244, 67, 54, 0.2); color: #f44336; }
         .event-connect { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            z-index: 1000; justify-content: center; align-items: center;
         }
         .modal.active { display: flex; }
         .modal-content {
-            background: #1a1a2e;
-            border-radius: 16px;
-            padding: 25px;
-            max-width: 900px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            background: #1a1a2e; border-radius: 16px; padding: 25px;
+            max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 24px;
-            cursor: pointer;
-        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-close { background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
         .modal-close:hover { color: #fff; }
         .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; margin-bottom: 20px;
         }
         .info-item {
-            background: rgba(255,255,255,0.03);
-            padding: 12px;
-            border-radius: 8px;
-            min-width: 0;
-            overflow: hidden;
+            background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;
+            min-width: 0; overflow: hidden;
         }
-        .info-item-wide {
-            grid-column: span 2;
-        }
+        .info-item-wide { grid-column: span 2; }
         .info-label { font-size: 11px; color: #888; margin-bottom: 4px; }
         .info-value {
-            font-size: 14px;
-            font-weight: 600;
-            margin-top: 2px;
-            word-break: break-all;
-            overflow-wrap: anywhere;
-            line-height: 1.4;
-            white-space: normal;
+            font-size: 14px; font-weight: 600; margin-top: 2px;
+            word-break: break-all; overflow-wrap: anywhere; line-height: 1.4; white-space: normal;
         }
-        .tab-sub {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .tab-sub { display: flex; gap: 10px; margin-bottom: 15px; }
         .tab-sub-btn {
-            padding: 6px 14px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: transparent;
-            color: #aaa;
-            cursor: pointer;
-            font-size: 12px;
+            padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            background: transparent; color: #aaa; cursor: pointer; font-size: 12px;
         }
         .tab-sub-btn.active { background: rgba(102, 126, 234, 0.3); color: #fff; border-color: #667eea; }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
+        .empty-state { text-align: center; padding: 40px; color: #666; }
         .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
-
-        /* 自定义下拉选择框深色主题 */
-        .custom-select {
-            position: relative;
-            display: inline-block;
-            min-width: 100px;
-        }
+        .custom-select { position: relative; display: inline-block; min-width: 100px; }
         .custom-select-trigger {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px;
-            padding: 6px 28px 6px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: all 0.2s;
-            user-select: none;
+            background: rgba(255,255,255,0.1); color: #fff;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 6px;
+            padding: 6px 28px 6px 10px; font-size: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.2s; user-select: none;
         }
-        .custom-select-trigger:hover {
-            background: rgba(255,255,255,0.15);
-            border-color: rgba(102,126,234,0.5);
-        }
+        .custom-select-trigger:hover { background: rgba(255,255,255,0.15); border-color: rgba(102,126,234,0.5); }
         .custom-select-trigger::after {
-            content: '';
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 5px solid #aaa;
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            transition: transform 0.2s;
+            content: ''; width: 0; height: 0;
+            border-left: 5px solid transparent; border-right: 5px solid transparent;
+            border-top: 5px solid #aaa; position: absolute; right: 10px; top: 50%;
+            transform: translateY(-50%); transition: transform 0.2s;
         }
-        .custom-select.open .custom-select-trigger::after {
-            transform: translateY(-50%) rotate(180deg);
-        }
+        .custom-select.open .custom-select-trigger::after { transform: translateY(-50%) rotate(180deg); }
         .custom-select-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #1a1a2e;
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 6px;
-            margin-top: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #1a1a2e; border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px; margin-top: 4px; max-height: 200px; overflow-y: auto;
+            z-index: 1000; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
-        .custom-select.open .custom-select-options {
-            display: block;
-        }
+        .custom-select.open .custom-select-options { display: block; }
         .custom-select-option {
-            padding: 8px 12px;
-            color: #e0e0e0;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.15s;
-            user-select: none;
+            padding: 8px 12px; color: #e0e0e0; font-size: 12px; cursor: pointer;
+            transition: all 0.15s; user-select: none;
         }
-        .custom-select-option:hover {
-            background: rgba(102,126,234,0.2);
-            color: #fff;
-        }
-        .custom-select-option.selected {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-        }
-
-        /* 周期流量统计弹窗 */
+        .custom-select-option:hover { background: rgba(102,126,234,0.2); color: #fff; }
+        .custom-select-option.selected { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
         .period-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
         }
         .period-modal-content {
-            background: #1a1a2e;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 85vh;
-            overflow-y: auto;
-            border: 1px solid #333;
+            background: #1a1a2e; border-radius: 12px; width: 90%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto; border: 1px solid #333;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
         .period-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid #333;
             background: linear-gradient(135deg, #9c27b0, #673ab7);
         }
-        .period-modal-header h3 {
-            margin: 0;
-            color: #fff;
-            font-size: 18px;
-        }
-        .period-modal-close {
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-            line-height: 1;
-        }
-        .period-modal-body {
-            padding: 20px;
-        }
-        .period-current {
-            background: #16213e;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        .period-current-title {
-            font-size: 16px;
-            color: #e0e0e0;
-            margin-bottom: 12px;
-            font-weight: bold;
-        }
-        .period-current-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-        }
-        .period-stat-item {
-            text-align: center;
-        }
-        .period-stat-label {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 4px;
-        }
-        .period-stat-value {
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .period-current-time {
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }
-        .period-settings {
-            margin-bottom: 20px;
-        }
-        .period-settings-title, .period-history-title {
-            font-size: 14px;
-            color: #aaa;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .period-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
+        .period-modal-header h3 { margin: 0; color: #fff; font-size: 18px; }
+        .period-modal-close { color: #fff; font-size: 24px; cursor: pointer; line-height: 1; }
+        .period-modal-body { padding: 20px; }
+        .period-current { background: #16213e; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .period-current-title { font-size: 16px; color: #e0e0e0; margin-bottom: 12px; font-weight: bold; }
+        .period-current-stats { display: flex; justify-content: space-around; margin-bottom: 10px; }
+        .period-stat-item { text-align: center; }
+        .period-stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .period-stat-value { font-size: 20px; font-weight: bold; }
+        .period-current-time { font-size: 12px; color: #666; text-align: center; }
+        .period-settings { margin-bottom: 20px; }
+        .period-settings-title, .period-history-title { font-size: 14px; color: #aaa; margin-bottom: 10px; font-weight: bold; }
+        .period-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .period-option {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 12px;
-            background: #16213e;
-            border-radius: 6px;
-            cursor: pointer;
-            color: #ccc;
-            font-size: 13px;
+            display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+            background: #16213e; border-radius: 6px; cursor: pointer; color: #ccc; font-size: 13px;
         }
-        .period-option input {
-            cursor: pointer;
-        }
+        .period-option input { cursor: pointer; }
         .period-custom-input {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            color: #ccc;
-            font-size: 13px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #ccc; font-size: 13px;
         }
         .period-custom-input input {
-            background: #0f3460;
-            border: 1px solid #333;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-align: center;
+            background: #0f3460; border: 1px solid #333; color: #fff;
+            padding: 4px 8px; border-radius: 4px; text-align: center;
         }
-        .period-actions {
-            display: flex;
-            gap: 10px;
-        }
+        .period-actions { display: flex; gap: 10px; }
         .period-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: opacity 0.2s;
+            flex: 1; padding: 10px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 14px; font-weight: bold; transition: opacity 0.2s;
         }
-        .period-btn:hover {
-            opacity: 0.8;
-        }
-        .period-btn-primary {
-            background: #9c27b0;
-            color: #fff;
-        }
-        .period-btn-danger {
-            background: #f44336;
-            color: #fff;
-        }
-        .period-history-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
+        .period-btn:hover { opacity: 0.8; }
+        .period-btn-primary { background: #9c27b0; color: #fff; }
+        .period-btn-danger { background: #f44336; color: #fff; }
+        .period-history-list { max-height: 200px; overflow-y: auto; }
         .period-history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            background: #16213e;
-            border-radius: 6px;
-            margin-bottom: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: #16213e; border-radius: 6px; margin-bottom: 6px;
         }
-        .period-history-item.current {
-            border-left: 3px solid #9c27b0;
-        }
-        .period-history-label {
-            font-size: 13px;
-            color: #ddd;
-        }
-        .period-history-time {
-            font-size: 11px;
-            color: #666;
-        }
-        .period-history-traffic {
-            font-size: 13px;
-            color: #9c27b0;
-            font-weight: bold;
-        }
-
+        .period-history-item.current { border-left: 3px solid #9c27b0; }
+        .period-history-label { font-size: 13px; color: #ddd; }
+        .period-history-time { font-size: 11px; color: #666; }
+        .period-history-traffic { font-size: 13px; color: #9c27b0; font-weight: bold; }
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .header { padding: 12px 15px; }
@@ -564,15 +280,13 @@
             <button class="nav-tab active" onclick="switchTab('dashboard')">📊 仪表盘</button>
             <button class="nav-tab" onclick="switchTab('devices')">📱 设备列表</button>
             <button class="nav-tab" onclick="switchTab('ranking')">🏆 流量排行</button>
+            <button class="nav-tab" onclick="switchTab('browsing')">🌐 浏览记录</button>
             <button class="nav-tab" onclick="switchTab('events')">📋 连接记录</button>
             <button class="nav-tab" onclick="switchTab('about')">ℹ️ 关于</button>
         </div>
 
-        <!-- 仪表盘 -->
         <div id="tab-dashboard">
             <div class="stats-grid" id="statsGrid"></div>
-
-            <!-- 网关设置提示 / 全局流量监控开关 -->
             <div class="card" id="gatewayTip" style="border-left: 3px solid #ff9800; margin-bottom: 20px;">
                 <div style="display:flex;align-items:flex-start;gap:12px;">
                     <div style="font-size:24px;">💡</div>
@@ -583,9 +297,7 @@
                             <strong style="color:#4caf50;">推荐方案：</strong>点击下方按钮开启「全局流量监控模式」，所有设备流量将自动经过 Orange Pi，无需手动设置任何设备。
                         </div>
                         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                            <button class="btn btn-primary" id="globalSpoofBtn" onclick="toggleGlobalSpoof()" style="background:linear-gradient(135deg,#4caf50,#2e7d32);">
-                                🚀 开启全局流量监控模式
-                            </button>
+                            <button class="btn btn-primary" id="globalSpoofBtn" onclick="toggleGlobalSpoof()" style="background:linear-gradient(135deg,#4caf50,#2e7d32);">🚀 开启全局流量监控模式</button>
                             <span id="globalSpoofStatus" style="font-size:12px;color:#888;">未开启</span>
                         </div>
                         <div style="font-size:11px;color:#666;margin-top:8px;">
@@ -594,7 +306,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-title">
                     <span>📈 实时流量趋势</span>
@@ -603,14 +314,11 @@
                 <div class="chart-container"><canvas id="trafficChart"></canvas></div>
             </div>
             <div class="card">
-                <div class="card-title">
-                    <span>🔥 流量排行 TOP 10</span>
-                </div>
+                <div class="card-title"><span>🔥 流量排行 TOP 10</span></div>
                 <div id="topDevices"></div>
             </div>
         </div>
 
-        <!-- 设备列表 -->
         <div id="tab-devices" style="display:none;">
             <div class="card">
                 <div class="card-title">
@@ -631,16 +339,8 @@
                     <table class="device-table">
                         <thead>
                             <tr>
-                                <th>状态</th>
-                                <th>设备名称</th>
-                                <th>IP地址</th>
-                                <th>MAC地址</th>
-                                <th>厂商</th>
-                                <th>↑ 上传速率</th>
-                                <th>↓ 下载速率</th>
-                                <th>总流量</th>
-                                <th>管理状态</th>
-                                <th>操作</th>
+                                <th>状态</th><th>设备名称</th><th>IP地址</th><th>MAC地址</th><th>厂商</th>
+                                <th>↑ 上传速率</th><th>↓ 下载速率</th><th>总流量</th><th>管理状态</th><th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="deviceTableBody"></tbody>
@@ -649,7 +349,6 @@
             </div>
         </div>
 
-        <!-- 流量排行 -->
         <div id="tab-ranking" style="display:none;">
             <div class="card">
                 <div class="card-title">
@@ -674,7 +373,19 @@
             </div>
         </div>
 
-        <!-- 连接记录 -->
+        <div id="tab-browsing" style="display:none;">
+            <div class="card">
+                <div class="card-title">
+                    <span>🌐 设备浏览记录</span>
+                    <span style="font-size:12px;color:#888;" id="browsingInfo"></span>
+                    <button class="tab-sub-btn" style="margin-left:auto;" onclick="loadBrowsingHistory()">🔄 刷新</button>
+                </div>
+                <div id="browsingContent">
+                    <p style="color:#888;text-align:center;padding:40px;">加载中...</p>
+                </div>
+            </div>
+        </div>
+
         <div id="tab-events" style="display:none;">
             <div class="card">
                 <div class="card-title">
@@ -685,7 +396,6 @@
             </div>
         </div>
 
-        <!-- 关于 -->
         <div id="tab-about" style="display:none;">
             <div class="card">
                 <div class="card-title"><span>ℹ️ 关于 NetPulse</span></div>
@@ -693,27 +403,28 @@
                     <p><strong>NetPulse 网脉</strong> - 轻量级网络设备管理系统</p>
                     <p>📌 功能特性：</p>
                     <ul style="margin-left:20px;">
-                        <li>✅ 自动发现局域网所有设备（ARP扫描 + Ping扫描）</li>
+                        <li>✅ 自动发现局域网所有设备（ARP扫描 + Ping扫描 + 跨网段扫描）</li>
                         <li>✅ 实时监控每台设备的上下行速率</li>
                         <li>✅ 精确统计每台设备的流量使用（iptables内核级计数）</li>
                         <li>✅ 按小时/天/周/月查看历史流量数据</li>
                         <li>✅ 记录设备连接/断开事件</li>
                         <li>✅ 设备命名与备注管理</li>
                         <li>✅ MAC地址厂商自动识别</li>
+                        <li>✅ WiFi频段标注（2.4G/5G/有线）</li>
                         <li>✅ 🚫 设备封禁（踢出网络，ARP欺骗+iptables DROP）</li>
                         <li>✅ ⏱️ 设备限速（tc HTB流量控制，可设上下行带宽）</li>
-                        <li>✅ 设备管理状态实时显示</li>
                         <li>✅ 📊 周期流量统计（每月/每季度/每年/自定义，支持自动清零）</li>
+                        <li>✅ 🌐 浏览记录（基于AdGuard Home DNS查询日志）</li>
+                        <li>✅ 🔧 自动健康检查与修复（ARP/NAT/iptables自动恢复）</li>
                     </ul>
-                    <p style="margin-top:15px;">🔧 技术栈：Python Flask + SQLite + iptables + tc + ARP欺骗 + Chart.js</p>
+                    <p style="margin-top:15px;">🔧 技术栈：Python Flask + SQLite + iptables + tc + ARP欺骗 + AdGuard Home + Chart.js</p>
                     <p>💾 数据存储：本地SQLite数据库，数据保留90天</p>
-                    <p style="margin-top:10px;color:#ff9800;">⚠️ 注意：设备封禁和限速功能通过ARP欺骗实现，需要设备与Orange Pi在同一局域网。封禁/限速可能对部分有ARP防护的设备无效。</p>
+                    <p style="margin-top:10px;color:#ff9800;">⚠️ 注意：设备封禁和限速功能通过ARP欺骗实现，需要设备与Orange Pi在同一局域网。</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 设备详情弹窗 -->
     <div class="modal" id="deviceModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -724,7 +435,6 @@
         </div>
     </div>
 
-    <!-- 限速设置弹窗 -->
     <div class="modal" id="limitModal">
         <div class="modal-content" style="max-width:450px;">
             <div class="modal-header">
@@ -735,8 +445,7 @@
                 <p style="margin-bottom:15px;color:#aaa;font-size:13px;">设置设备的上下行带宽限制（单位：kbps，1Mbps=1024kbps）</p>
                 <div style="margin-bottom:15px;">
                     <label style="display:block;margin-bottom:8px;font-size:13px;">⬆️ 上传限速 (kbps)</label>
-                    <input type="number" id="limitUpload" value="1024" min="64" max="100000"
-                           style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
+                    <input type="number" id="limitUpload" value="1024" min="64" max="100000" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
                     <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
                         <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=512">512k</button>
                         <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=1024">1M</button>
@@ -747,8 +456,7 @@
                 </div>
                 <div style="margin-bottom:20px;">
                     <label style="display:block;margin-bottom:8px;font-size:13px;">⬇️ 下载限速 (kbps)</label>
-                    <input type="number" id="limitDownload" value="2048" min="64" max="100000"
-                           style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
+                    <input type="number" id="limitDownload" value="2048" min="64" max="100000" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
                     <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
                         <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=1024">1M</button>
                         <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=2048">2M</button>
@@ -765,7 +473,6 @@
         </div>
     </div>
 
-    <!-- 确认弹窗 -->
     <div class="modal" id="confirmModal">
         <div class="modal-content" style="max-width:400px;">
             <div class="modal-header">
@@ -782,7 +489,6 @@
         </div>
     </div>
 
-    <!-- 周期流量统计弹窗 -->
     <div id="periodModal" class="period-modal" style="display:none;">
         <div class="period-modal-content">
             <div class="period-modal-header">
@@ -790,7 +496,6 @@
                 <span class="period-modal-close" onclick="closePeriodModal()">&times;</span>
             </div>
             <div class="period-modal-body">
-                <!-- 当前周期统计 -->
                 <div class="period-current">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                         <div class="period-current-title" id="currentPeriodLabel" style="margin:0;">本月流量统计</div>
@@ -802,47 +507,22 @@
                         </select>
                     </div>
                     <div class="period-current-stats">
-                        <div class="period-stat-item">
-                            <div class="period-stat-label">上传</div>
-                            <div class="period-stat-value" style="color:#ff9800;" id="currentUpload">0 B</div>
-                        </div>
-                        <div class="period-stat-item">
-                            <div class="period-stat-label">下载</div>
-                            <div class="period-stat-value" style="color:#2196f3;" id="currentDownload">0 B</div>
-                        </div>
-                        <div class="period-stat-item">
-                            <div class="period-stat-label">总计</div>
-                            <div class="period-stat-value" style="color:#9c27b0;" id="currentTotal">0 B</div>
-                        </div>
+                        <div class="period-stat-item"><div class="period-stat-label">上传</div><div class="period-stat-value" style="color:#ff9800;" id="currentUpload">0 B</div></div>
+                        <div class="period-stat-item"><div class="period-stat-label">下载</div><div class="period-stat-value" style="color:#2196f3;" id="currentDownload">0 B</div></div>
+                        <div class="period-stat-item"><div class="period-stat-label">总计</div><div class="period-stat-value" style="color:#9c27b0;" id="currentTotal">0 B</div></div>
                     </div>
                     <div class="period-current-time" id="currentPeriodTime">开始时间：-</div>
                 </div>
-
-                <!-- 周期设置 -->
                 <div class="period-settings">
                     <div class="period-settings-title">统计周期设置</div>
                     <div class="period-options">
-                        <label class="period-option">
-                            <input type="radio" name="periodType" value="monthly" checked onchange="onPeriodTypeChange()">
-                            <span>每月</span>
-                        </label>
-                        <label class="period-option">
-                            <input type="radio" name="periodType" value="quarterly" onchange="onPeriodTypeChange()">
-                            <span>每季度</span>
-                        </label>
-                        <label class="period-option">
-                            <input type="radio" name="periodType" value="yearly" onchange="onPeriodTypeChange()">
-                            <span>每年</span>
-                        </label>
-                        <label class="period-option">
-                            <input type="radio" name="periodType" value="custom" onchange="onPeriodTypeChange()">
-                            <span>自定义</span>
-                        </label>
+                        <label class="period-option"><input type="radio" name="periodType" value="monthly" checked onchange="onPeriodTypeChange()"><span>每月</span></label>
+                        <label class="period-option"><input type="radio" name="periodType" value="quarterly" onchange="onPeriodTypeChange()"><span>每季度</span></label>
+                        <label class="period-option"><input type="radio" name="periodType" value="yearly" onchange="onPeriodTypeChange()"><span>每年</span></label>
+                        <label class="period-option"><input type="radio" name="periodType" value="custom" onchange="onPeriodTypeChange()"><span>自定义</span></label>
                     </div>
                     <div class="period-custom-input" id="customDaysInput" style="display:none;">
-                        <span>每</span>
-                        <input type="number" id="customDays" value="30" min="1" max="365" style="width:60px;">
-                        <span>天清零一次</span>
+                        <span>每</span><input type="number" id="customDays" value="30" min="1" max="365" style="width:60px;"><span>天清零一次</span>
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 12px;background:#16213e;border-radius:6px;">
                         <div>
@@ -860,8 +540,6 @@
                         <button class="period-btn period-btn-danger" onclick="resetPeriod()">立即清零</button>
                     </div>
                 </div>
-
-                <!-- 历史周期 -->
                 <div class="period-history">
                     <div class="period-history-title">历史周期统计</div>
                     <div class="period-history-list" id="periodHistoryList">
@@ -878,48 +556,33 @@
         let trafficHistory = [];
         let currentTab = 'dashboard';
 
-        // ============================================================
-        // 自定义下拉选择框组件
-        // ============================================================
         function toggleCustomSelect(id) {
             const select = document.getElementById(id);
             const wasOpen = select.classList.contains('open');
             document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
-            if (!wasOpen) {
-                select.classList.add('open');
-            }
+            if (!wasOpen) select.classList.add('open');
         }
-
         function selectCustomOption(id, value, text) {
             const select = document.getElementById(id);
             select.querySelector('.custom-select-trigger').textContent = text;
+            select.querySelectorAll('.custom-select-option').forEach(opt => opt.classList.remove('selected'));
             select.querySelectorAll('.custom-select-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-            const options = select.querySelectorAll('.custom-select-option');
-            options.forEach(opt => {
-                if (opt.getAttribute('onclick').indexOf("'" + value + "'") !== -1) {
-                    opt.classList.add('selected');
-                }
+                if (opt.getAttribute('onclick').indexOf("'" + value + "'") !== -1) opt.classList.add('selected');
             });
             select.classList.remove('open');
             select.dataset.value = value;
             if (id === 'rankingSort') loadRanking();
             if (id === 'filterSelect') filterDevices();
         }
-
         function getCustomSelectValue(id) {
-            const select = document.getElementById(id);
-            return select.dataset.value || 'total';
+            return document.getElementById(id).dataset.value || 'total';
         }
-
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.custom-select')) {
                 document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
             }
         });
 
-        // 格式化
         function formatBytes(bytes) {
             if (!bytes || bytes < 0) return '0 B';
             if (bytes < 1024) return bytes.toFixed(0) + ' B';
@@ -933,7 +596,6 @@
             return (kbps/1024).toFixed(2) + ' MB/s';
         }
 
-        // WiFi频段标签（可点击切换）
         function getBandBadge(band, mac) {
             const styles = {
                 '2.4g': 'background:rgba(255,152,0,0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.3);',
@@ -947,119 +609,74 @@
             const clickHandler = mac ? `onclick="event.stopPropagation();cycleBand('${mac}','${band}')" style="cursor:pointer;"` : '';
             return `<span ${clickHandler} title="点击切换频段" style="font-size:9px;padding:1px 5px;border-radius:3px;${style}">${name}</span>`;
         }
-
-        // 循环切换频段
         async function cycleBand(mac, currentBand) {
             const bands = ['unknown', '2.4g', '5g', 'wired'];
-            const currentIndex = bands.indexOf(currentBand);
-            const nextBand = bands[(currentIndex + 1) % bands.length];
+            const nextBand = bands[(bands.indexOf(currentBand) + 1) % bands.length];
             await setDeviceBand(mac, nextBand);
         }
-
-        // 设置设备频段
         async function setDeviceBand(mac, band) {
             try {
-                const res = await fetch(`/api/device/${mac}/band`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({band})
-                });
+                const res = await fetch(`/api/device/${mac}/band`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({band})});
                 const data = await res.json();
-                if (data.success) {
-                    loadDevices();
-                } else {
-                    alert(data.error || '设置失败');
-                }
-            } catch(e) {
-                alert('设置失败: ' + e.message);
-            }
+                if (data.success) loadDevices();
+                else alert(data.error || '设置失败');
+            } catch(e) { alert('设置失败: ' + e.message); }
         }
-
-        // 频段选择（自定义下拉组件）
         function selectBandOption(mac, band, text) {
             const selectId = 'bandSelect_' + mac.replace(/:/g,'');
             const select = document.getElementById(selectId);
             if (select) {
                 select.querySelector('.custom-select-trigger').textContent = text;
                 select.querySelectorAll('.custom-select-option').forEach(opt => opt.classList.remove('selected'));
-                const options = select.querySelectorAll('.custom-select-option');
-                options.forEach(opt => {
-                    if (opt.getAttribute('onclick').indexOf("'" + band + "'") !== -1) {
-                        opt.classList.add('selected');
-                    }
+                select.querySelectorAll('.custom-select-option').forEach(opt => {
+                    if (opt.getAttribute('onclick').indexOf("'" + band + "'") !== -1) opt.classList.add('selected');
                 });
                 select.classList.remove('open');
             }
             setDeviceBand(mac, band);
         }
 
-        // 切换标签
         function switchTab(tab) {
             currentTab = tab;
-            const tabs = ['dashboard','devices','ranking','events','about'];
-            document.querySelectorAll('.nav-tab').forEach((t, i) => {
-                t.classList.toggle('active', tabs[i] === tab);
-            });
-            tabs.forEach(t => {
-                document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
-            });
+            const tabs = ['dashboard','devices','ranking','browsing','events','about'];
+            document.querySelectorAll('.nav-tab').forEach((t, i) => t.classList.toggle('active', tabs[i] === tab));
+            tabs.forEach(t => document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none');
             if (tab === 'events') loadEvents();
             if (tab === 'ranking') loadRanking();
+            if (tab === 'browsing') loadBrowsingHistory();
         }
 
-        // 加载概览
         async function loadSummary() {
             try {
                 const res = await fetch('/api/summary');
                 const data = await res.json();
-
-                // 计算管理设备统计
                 const blockedCount = allDevices ? allDevices.filter(d => d.is_blocked === 1).length : 0;
                 const limitedCount = allDevices ? allDevices.filter(d => d.upload_limit > 0 || d.download_limit > 0).length : 0;
                 const managedCount = blockedCount + limitedCount;
-
                 document.getElementById('statsGrid').innerHTML = `
                     <div class="stat-card" onclick="switchTab('devices')" style="cursor:pointer;">
-                        <div class="stat-icon">📱</div>
-                        <div class="stat-label">在线设备</div>
+                        <div class="stat-icon">📱</div><div class="stat-label">在线设备</div>
                         <div class="stat-value" style="color:#4caf50;">${data.online_devices}</div>
                         <div class="stat-sub">共 ${data.total_devices} 台设备</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⬆️</div>
-                        <div class="stat-label">当前上传速率</div>
+                    <div class="stat-card"><div class="stat-icon">⬆️</div><div class="stat-label">当前上传速率</div>
                         <div class="stat-value" style="color:#ff9800;font-size:22px;">${data.formatted.avg_upload_rate}</div>
-                        <div class="stat-sub">累计上传 ${data.formatted.total_upload}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⬇️</div>
-                        <div class="stat-label">当前下载速率</div>
+                        <div class="stat-sub">累计上传 ${data.formatted.total_upload}</div></div>
+                    <div class="stat-card"><div class="stat-icon">⬇️</div><div class="stat-label">当前下载速率</div>
                         <div class="stat-value" style="color:#2196f3;font-size:22px;">${data.formatted.avg_download_rate}</div>
-                        <div class="stat-sub">累计下载 ${data.formatted.total_download}</div>
-                    </div>
+                        <div class="stat-sub">累计下载 ${data.formatted.total_download}</div></div>
                     <div class="stat-card" onclick="openPeriodModal()" style="cursor:pointer;border-left:3px solid #9c27b0;">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-label">总流量<span style="font-size:10px;color:#888;margin-left:5px;">点击设置周期</span></div>
+                        <div class="stat-icon">📊</div><div class="stat-label">总流量<span style="font-size:10px;color:#888;margin-left:5px;">点击设置周期</span></div>
                         <div class="stat-value" style="color:#9c27b0;font-size:22px;" id="periodTotalValue">${formatBytes(data.total_upload + data.total_download)}</div>
-                        <div class="stat-sub" id="periodLabel">上传 + 下载</div>
-                    </div>
-                    <div class="stat-card" style="border-left:3px solid #f44336;">
-                        <div class="stat-icon">🚫</div>
-                        <div class="stat-label">已封禁设备</div>
-                        <div class="stat-value" style="color:#f44336;">${blockedCount}</div>
-                        <div class="stat-sub">已限速 ${limitedCount} 台</div>
-                    </div>
-                    <div class="stat-card" style="border-left:3px solid #ff9800;">
-                        <div class="stat-icon">⚙️</div>
-                        <div class="stat-label">管理中设备</div>
-                        <div class="stat-value" style="color:#ff9800;">${managedCount}</div>
-                        <div class="stat-sub">封禁 + 限速</div>
-                    </div>
+                        <div class="stat-sub" id="periodLabel">上传 + 下载</div></div>
+                    <div class="stat-card" style="border-left:3px solid #f44336;"><div class="stat-icon">🚫</div><div class="stat-label">已封禁设备</div>
+                        <div class="stat-value" style="color:#f44336;">${blockedCount}</div><div class="stat-sub">已限速 ${limitedCount} 台</div></div>
+                    <div class="stat-card" style="border-left:3px solid #ff9800;"><div class="stat-icon">⚙️</div><div class="stat-label">管理中设备</div>
+                        <div class="stat-value" style="color:#ff9800;">${managedCount}</div><div class="stat-sub">封禁 + 限速</div></div>
                 `;
             } catch(e) { console.error(e); }
         }
 
-        // 加载设备列表
         async function loadDevices() {
             try {
                 const res = await fetch('/api/devices');
@@ -1073,24 +690,19 @@
             const search = document.getElementById('searchInput').value.toLowerCase();
             const filter = getCustomSelectValue('filterSelect');
             const tbody = document.getElementById('deviceTableBody');
-
             let filtered = allDevices.filter(d => {
                 if (filter === 'online' && !d.is_online) return false;
                 if (filter === 'offline' && d.is_online) return false;
                 if (search) {
-                    return (d.name || '').toLowerCase().includes(search) ||
-                           (d.ip || '').includes(search) ||
-                           (d.mac || '').toLowerCase().includes(search) ||
-                           (d.vendor || '').toLowerCase().includes(search);
+                    return (d.name || '').toLowerCase().includes(search) || (d.ip || '').includes(search) ||
+                           (d.mac || '').toLowerCase().includes(search) || (d.vendor || '').toLowerCase().includes(search);
                 }
                 return true;
             });
-
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">📭</div>没有找到设备</div></td></tr>';
                 return;
             }
-
             tbody.innerHTML = filtered.map(d => {
                 const isBlocked = d.is_blocked === 1;
                 const isLimited = (d.upload_limit > 0 || d.download_limit > 0);
@@ -1098,51 +710,30 @@
                 if (isBlocked) statusBadges += '<span class="badge badge-danger">🚫 已封禁</span>';
                 if (isLimited) statusBadges += `<span class="badge badge-warning">⏱️ ${d.upload_limit || d.download_limit}k</span>`;
                 if (!statusBadges) statusBadges = '<span style="color:#666;font-size:11px;">正常</span>';
-
                 const totalRate = (d.current_upload_rate || 0) + (d.current_download_rate || 0);
                 const maxRate = Math.max(...allDevices.map(x => (x.current_upload_rate || 0) + (x.current_download_rate || 0)), 1);
                 const ratePercent = Math.min((totalRate / maxRate * 100), 100).toFixed(1);
-
                 return `
                 <tr style="${isBlocked ? 'opacity:0.6;' : ''}" class="device-row">
                     <td><span class="online-dot ${d.is_online ? 'online' : 'offline'}"></span>${d.is_online ? '在线' : '离线'}</td>
-                    <td>
-                        <div class="device-name" onclick="showDeviceDetail('${d.mac}')">${d.name || d.vendor || '未知设备'}</div>
+                    <td><div class="device-name" onclick="showDeviceDetail('${d.mac}')">${d.name || d.vendor || '未知设备'}</div>
                         <div style="font-size:10px;color:#666;margin-top:2px;display:flex;align-items:center;gap:6px;">
-                            <span>${d.vendor || '未知厂商'}</span>
-                            ${getBandBadge(d.wifi_band, d.mac)}
-                        </div>
-                    </td>
+                            <span>${d.vendor || '未知厂商'}</span>${getBandBadge(d.wifi_band, d.mac)}</div></td>
                     <td><span style="font-family:monospace;font-size:12px;">${d.ip || '-'}</span></td>
                     <td><span class="device-mac">${d.mac}</span></td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:6px;">
-                            <span style="font-size:11px;">${d.vendor || '未知'}</span>
-                        </div>
-                    </td>
+                    <td><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;">${d.vendor || '未知'}</span></div></td>
                     <td class="rate-up">${d.is_online ? d.upload_rate_str : '-'}</td>
                     <td class="rate-down">${d.is_online ? d.download_rate_str : '-'}</td>
-                    <td>
-                        <div>${formatBytes(d.total_upload + d.total_download)}</div>
+                    <td><div>${formatBytes(d.total_upload + d.total_download)}</div>
                         <div style="background:rgba(255,255,255,0.1);height:4px;border-radius:2px;margin-top:4px;overflow:hidden;min-width:60px;">
-                            <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${ratePercent}%;border-radius:2px;"></div>
-                        </div>
-                    </td>
+                            <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${ratePercent}%;border-radius:2px;"></div></div></td>
                     <td>${statusBadges}</td>
-                    <td>
-                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                            ${isBlocked
-                                ? `<button class="btn btn-success btn-sm" onclick="unblockDevice('${d.mac}')">解封</button>`
-                                : `<button class="btn btn-danger btn-sm" onclick="blockDevice('${d.mac}')">封禁</button>`
-                            }
-                            ${isLimited
-                                ? `<button class="btn btn-info btn-sm" onclick="unlimitDevice('${d.mac}')">取消</button>`
-                                : `<button class="btn btn-warning btn-sm" onclick="showLimitModal('${d.mac}')">限速</button>`
-                            }
-                        </div>
-                    </td>
-                </tr>
-            `}).join('');
+                    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
+                        ${isBlocked ? `<button class="btn btn-success btn-sm" onclick="unblockDevice('${d.mac}')">解封</button>` : `<button class="btn btn-danger btn-sm" onclick="blockDevice('${d.mac}')">封禁</button>`}
+                        ${isLimited ? `<button class="btn btn-info btn-sm" onclick="unlimitDevice('${d.mac}')">取消</button>` : `<button class="btn btn-warning btn-sm" onclick="showLimitModal('${d.mac}')">限速</button>`}
+                    </div></td>
+                </tr>`;
+            }).join('');
         }
 
         function renderTopDevices() {
@@ -1152,22 +743,15 @@
                     const rateB = b.current_upload_rate + b.current_download_rate;
                     if (rateA !== rateB) return rateB - rateA;
                     return (b.total_upload + b.total_download) - (a.total_upload + a.total_download);
-                })
-                .slice(0, 10);
-
+                }).slice(0, 10);
             const container = document.getElementById('topDevices');
-            if (top.length === 0) {
-                container.innerHTML = '<div class="empty-state">暂无在线设备</div>';
-                return;
-            }
-
+            if (top.length === 0) { container.innerHTML = '<div class="empty-state">暂无在线设备</div>'; return; }
             const maxRate = Math.max(...top.map(d => d.current_upload_rate + d.current_download_rate), 1);
             const maxTraffic = Math.max(...top.map(d => d.total_upload + d.total_download), 1);
+            const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
             container.innerHTML = top.map((d, i) => {
                 const total = d.current_upload_rate + d.current_download_rate;
                 const percent = (total / maxRate * 100).toFixed(1);
-                const trafficPercent = ((d.total_upload + d.total_download) / maxTraffic * 100).toFixed(1);
-                const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
                 const rankColor = i < 3 ? rankColors[i] : '#666';
                 return `
                     <div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.2s;" onclick="showDeviceDetail('${d.mac}')" onmouseover="this.style.background='rgba(102,126,234,0.05)'" onmouseout="this.style.background='transparent'">
@@ -1176,92 +760,62 @@
                             <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name || d.vendor || '未知设备'} <span style="color:#666;font-size:11px;font-weight:400;">${d.ip}</span></div>
                             <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
                                 <div style="flex:1;background:rgba(255,255,255,0.08);height:5px;border-radius:3px;overflow:hidden;">
-                                    <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${percent}%;border-radius:3px;transition:width 0.5s;"></div>
-                                </div>
-                                <span style="font-size:10px;color:#888;min-width:60px;text-align:right;">总流量 ${formatBytes(d.total_upload + d.total_download)}</span>
-                            </div>
-                        </div>
+                                    <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${percent}%;border-radius:3px;transition:width 0.5s;"></div></div>
+                                <span style="font-size:10px;color:#888;min-width:60px;text-align:right;">总流量 ${formatBytes(d.total_upload + d.total_download)}</span></div></div>
                         <div style="text-align:right;margin-left:15px;min-width:80px;">
                             <div class="rate-up" style="font-size:12px;">↑ ${formatRate(d.current_upload_rate)}</div>
-                            <div class="rate-down" style="font-size:12px;">↓ ${formatRate(d.current_download_rate)}</div>
-                        </div>
-                    </div>
-                `;
+                            <div class="rate-down" style="font-size:12px;">↓ ${formatRate(d.current_download_rate)}</div></div>
+                    </div>`;
             }).join('');
         }
 
-        function filterDevices() {
-            renderDeviceTable();
-        }
+        function filterDevices() { renderDeviceTable(); }
 
-        // 设备详情
         async function showDeviceDetail(mac) {
             try {
                 const res = await fetch('/api/device/' + mac);
                 const data = await res.json();
                 const d = data.device;
-
                 document.getElementById('modalDeviceName').innerHTML = `
                     ${d.name || d.vendor || '未知设备'}
                     <button class="btn" style="margin-left:10px;font-size:11px;padding:4px 10px;" onclick="renameDevice('${d.mac}')">✏️ 重命名</button>
-                    ${d.is_blocked === 1
-                        ? `<button class="btn btn-success" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="unblockDevice('${d.mac}')">✅ 解除封禁</button>`
-                        : `<button class="btn btn-danger" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="blockDevice('${d.mac}')">🚫 封禁</button>`
-                    }
-                    ${(d.upload_limit > 0 || d.download_limit > 0)
-                        ? `<button class="btn btn-info" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="unlimitDevice('${d.mac}')">↩️ 取消限速</button>`
-                        : `<button class="btn btn-warning" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="showLimitModal('${d.mac}')">⏱️ 限速</button>`
-                    }
-                `;
-
+                    ${d.is_blocked === 1 ? `<button class="btn btn-success" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="unblockDevice('${d.mac}')">✅ 解除封禁</button>` : `<button class="btn btn-danger" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="blockDevice('${d.mac}')">🚫 封禁</button>`}
+                    ${(d.upload_limit > 0 || d.download_limit > 0) ? `<button class="btn btn-info" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="unlimitDevice('${d.mac}')">↩️ 取消限速</button>` : `<button class="btn btn-warning" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="showLimitModal('${d.mac}')">⏱️ 限速</button>`}`;
                 document.getElementById('modalContent').innerHTML = `
                     <div class="info-grid">
                         <div class="info-item"><div class="info-label">状态</div><div class="info-value" style="color:${d.is_online?'#4caf50':'#666'}">${d.is_online?'● 在线':'○ 离线'}</div></div>
                         <div class="info-item info-item-wide"><div class="info-label">IP地址</div><div class="info-value" style="font-family:monospace;font-size:13px;">${d.ip || '-'}</div></div>
                         <div class="info-item info-item-wide"><div class="info-label">MAC地址</div><div class="info-value" style="font-family:monospace;font-size:13px;">${d.mac}</div></div>
                         <div class="info-item"><div class="info-label">厂商</div><div class="info-value">${d.vendor || '未知'}</div></div>
-                        <div class="info-item">
-                            <div class="info-label">连接频段</div>
-                            <div class="info-value">
-                                <div class="custom-select" id="bandSelect_${d.mac.replace(/:/g,'')}">
-                                    <div class="custom-select-trigger" onclick="toggleCustomSelect('bandSelect_${d.mac.replace(/:/g,'')}')" style="padding:4px 24px 4px 8px;font-size:12px;">${d.wifi_band=='unknown'?'未知':d.wifi_band=='2.4g'?'2.4GHz WiFi':d.wifi_band=='5g'?'5GHz WiFi':'有线连接'}</div>
-                                    <div class="custom-select-options">
-                                        <div class="custom-select-option ${d.wifi_band=='unknown'?'selected':''}" onclick="selectBandOption('${d.mac}','unknown','未知')">未知</div>
-                                        <div class="custom-select-option ${d.wifi_band=='2.4g'?'selected':''}" onclick="selectBandOption('${d.mac}','2.4g','2.4GHz WiFi')">2.4GHz WiFi</div>
-                                        <div class="custom-select-option ${d.wifi_band=='5g'?'selected':''}" onclick="selectBandOption('${d.mac}','5g','5GHz WiFi')">5GHz WiFi</div>
-                                        <div class="custom-select-option ${d.wifi_band=='wired'?'selected':''}" onclick="selectBandOption('${d.mac}','wired','有线连接')">有线连接</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="info-item"><div class="info-label">连接频段</div><div class="info-value">
+                            <div class="custom-select" id="bandSelect_${d.mac.replace(/:/g,'')}">
+                                <div class="custom-select-trigger" onclick="toggleCustomSelect('bandSelect_${d.mac.replace(/:/g,'')}')" style="padding:4px 24px 4px 8px;font-size:12px;">${d.wifi_band=='unknown'?'未知':d.wifi_band=='2.4g'?'2.4GHz WiFi':d.wifi_band=='5g'?'5GHz WiFi':'有线连接'}</div>
+                                <div class="custom-select-options">
+                                    <div class="custom-select-option ${d.wifi_band=='unknown'?'selected':''}" onclick="selectBandOption('${d.mac}','unknown','未知')">未知</div>
+                                    <div class="custom-select-option ${d.wifi_band=='2.4g'?'selected':''}" onclick="selectBandOption('${d.mac}','2.4g','2.4GHz WiFi')">2.4GHz WiFi</div>
+                                    <div class="custom-select-option ${d.wifi_band=='5g'?'selected':''}" onclick="selectBandOption('${d.mac}','5g','5GHz WiFi')">5GHz WiFi</div>
+                                    <div class="custom-select-option ${d.wifi_band=='wired'?'selected':''}" onclick="selectBandOption('${d.mac}','wired','有线连接')">有线连接</div>
+                                </div></div></div></div>
                         <div class="info-item"><div class="info-label">首次发现</div><div class="info-value" style="font-size:13px;">${d.first_seen_str || '-'}</div></div>
                         <div class="info-item"><div class="info-label">最后在线</div><div class="info-value" style="font-size:13px;">${d.last_seen_str || '-'}</div></div>
                         <div class="info-item"><div class="info-label">累计上传</div><div class="info-value" style="color:#ff9800;">${d.total_upload_str}</div></div>
                         <div class="info-item"><div class="info-label">累计下载</div><div class="info-value" style="color:#2196f3;">${d.total_download_str}</div></div>
                     </div>
-
                     <div class="tab-sub">
                         <button class="tab-sub-btn active" onclick="switchDetailTab(this,'24h')">24小时</button>
                         <button class="tab-sub-btn" onclick="switchDetailTab(this,'7d')">7天</button>
                         <button class="tab-sub-btn" onclick="switchDetailTab(this,'30d')">30天</button>
                     </div>
                     <div class="chart-container"><canvas id="detailChart"></canvas></div>
-
                     <h3 style="margin:20px 0 10px;font-size:14px;">📋 最近连接事件</h3>
                     <div class="event-list" style="max-height:250px;">
                         ${data.events.length === 0 ? '<div class="empty-state">暂无事件</div>' :
                         data.events.map(e => `
                             <div class="event-item">
-                                <div>
-                                    <span class="event-type event-${e.event_type}">${e.event_type === 'first_seen' ? '首次发现' : e.event_type === 'disconnect' ? '离线' : '连接'}</span>
-                                    <span style="margin-left:10px;font-size:12px;color:#aaa;">${e.details || ''}</span>
-                                </div>
-                                <span style="font-size:11px;color:#666;">${e.time_str}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-
+                                <div><span class="event-type event-${e.event_type}">${e.event_type === 'first_seen' ? '首次发现' : e.event_type === 'disconnect' ? '离线' : '连接'}</span>
+                                <span style="margin-left:10px;font-size:12px;color:#aaa;">${e.details || ''}</span></div>
+                                <span style="font-size:11px;color:#666;">${e.time_str}</span></div>`).join('')}
+                    </div>`;
                 document.getElementById('deviceModal').classList.add('active');
                 renderDetailChart(data.hourly_traffic, '24h');
             } catch(e) { console.error(e); }
@@ -1272,32 +826,21 @@
             const ctx = document.getElementById('detailChart');
             if (!ctx) return;
             if (detailChartInstance) detailChartInstance.destroy();
-
             const labels = data.map(d => period === '24h' ? d.hour.split(' ')[1].split(':')[0] + ':00' : d.date);
             const uploads = data.map(d => d.upload / (1024*1024));
             const downloads = data.map(d => d.download / (1024*1024));
-
             detailChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: '上传 (MB)', data: uploads, backgroundColor: 'rgba(255,152,0,0.6)', borderRadius: 4 },
-                        { label: '下载 (MB)', data: downloads, backgroundColor: 'rgba(33,150,243,0.6)', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                data: { labels, datasets: [
+                    { label: '上传 (MB)', data: uploads, backgroundColor: 'rgba(255,152,0,0.6)', borderRadius: 4 },
+                    { label: '下载 (MB)', data: downloads, backgroundColor: 'rgba(33,150,243,0.6)', borderRadius: 4 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: '#aaa' } } },
-                    scales: {
-                        x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                        y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                    }
-                }
+                    scales: { x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                              y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
             });
         }
-
         async function switchDetailTab(btn, period) {
             document.querySelectorAll('.tab-sub-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -1311,69 +854,40 @@
                 renderDetailChart(data, period);
             } catch(e) { console.error(e); }
         }
-
         async function renameDevice(mac) {
             const name = prompt('请输入设备名称：');
             if (!name) return;
             try {
-                await fetch(`/api/device/${mac}/rename`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-                showDeviceDetail(mac);
-                loadDevices();
+                await fetch(`/api/device/${mac}/rename`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name})});
+                showDeviceDetail(mac); loadDevices();
             } catch(e) { console.error(e); }
         }
-
-        function closeModal() {
-            document.getElementById('deviceModal').classList.remove('active');
-        }
-
-        // ============================================================
-        // 设备管理功能
-        // ============================================================
+        function closeModal() { document.getElementById('deviceModal').classList.remove('active'); }
 
         let currentLimitMac = null;
         let confirmCallback = null;
-
-        // 封禁设备
         function blockDevice(mac) {
             const device = allDevices.find(d => d.mac === mac);
             if (!device) return;
-            showConfirm(
-                '🚫 确认封禁设备',
+            showConfirm('🚫 确认封禁设备',
                 `确定要将设备「${device.name || device.vendor || '未知'}」(${device.ip})踢出网络吗？\n\n封禁后该设备将无法访问互联网，直到解除封禁。`,
                 async () => {
                     try {
-                        const res = await fetch(`/api/device/${mac}/block`, { method: 'POST' });
+                        const res = await fetch(`/api/device/${mac}/block`, {method: 'POST'});
                         const data = await res.json();
-                        if (data.success) {
-                            alert('✅ 设备已封禁');
-                            loadDevices();
-                        } else {
-                            alert('❌ ' + (data.error || '封禁失败'));
-                        }
+                        if (data.success) { alert('✅ 设备已封禁'); loadDevices(); }
+                        else alert('❌ ' + (data.error || '封禁失败'));
                     } catch(e) { alert('❌ 操作失败: ' + e.message); }
-                }
-            );
+                });
         }
-
-        // 解除封禁
         async function unblockDevice(mac) {
             try {
-                const res = await fetch(`/api/device/${mac}/unblock`, { method: 'POST' });
+                const res = await fetch(`/api/device/${mac}/unblock`, {method: 'POST'});
                 const data = await res.json();
-                if (data.success) {
-                    alert('✅ 设备已解除封禁');
-                    loadDevices();
-                } else {
-                    alert('❌ ' + (data.error || '操作失败'));
-                }
+                if (data.success) { alert('✅ 设备已解除封禁'); loadDevices(); }
+                else alert('❌ ' + (data.error || '操作失败'));
             } catch(e) { alert('❌ 操作失败: ' + e.message); }
         }
-
-        // 显示限速弹窗
         function showLimitModal(mac) {
             currentLimitMac = mac;
             const device = allDevices.find(d => d.mac === mac);
@@ -1383,84 +897,41 @@
             }
             document.getElementById('limitModal').classList.add('active');
         }
-
-        function closeLimitModal() {
-            document.getElementById('limitModal').classList.remove('active');
-            currentLimitMac = null;
-        }
-
-        // 应用限速
+        function closeLimitModal() { document.getElementById('limitModal').classList.remove('active'); currentLimitMac = null; }
         async function applyLimit() {
             if (!currentLimitMac) return;
             const upload = parseInt(document.getElementById('limitUpload').value);
             const download = parseInt(document.getElementById('limitDownload').value);
-            if (!upload || !download || upload < 64 || download < 64) {
-                alert('⚠️ 限速值必须大于64kbps');
-                return;
-            }
+            if (!upload || !download || upload < 64 || download < 64) { alert('⚠️ 限速值必须大于64kbps'); return; }
             try {
-                const res = await fetch(`/api/device/${currentLimitMac}/limit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ upload_kbps: upload, download_kbps: download })
-                });
+                const res = await fetch(`/api/device/${currentLimitMac}/limit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({upload_kbps: upload, download_kbps: download})});
                 const data = await res.json();
-                if (data.success) {
-                    alert(`✅ 限速已应用\n上传: ${upload}kbps / 下载: ${download}kbps`);
-                    closeLimitModal();
-                    loadDevices();
-                } else {
-                    alert('❌ ' + (data.error || '限速失败'));
-                }
+                if (data.success) { alert(`✅ 限速已应用\n上传: ${upload}kbps / 下载: ${download}kbps`); closeLimitModal(); loadDevices(); }
+                else alert('❌ ' + (data.error || '限速失败'));
             } catch(e) { alert('❌ 操作失败: ' + e.message); }
         }
-
-        // 取消限速
         async function unlimitDevice(mac) {
             try {
-                const res = await fetch(`/api/device/${mac}/unlimit`, { method: 'POST' });
+                const res = await fetch(`/api/device/${mac}/unlimit`, {method: 'POST'});
                 const data = await res.json();
-                if (data.success) {
-                    alert('✅ 已取消限速');
-                    loadDevices();
-                } else {
-                    alert('❌ ' + (data.error || '操作失败'));
-                }
+                if (data.success) { alert('✅ 已取消限速'); loadDevices(); }
+                else alert('❌ ' + (data.error || '操作失败'));
             } catch(e) { alert('❌ 操作失败: ' + e.message); }
         }
-
-        // 确认弹窗
         function showConfirm(title, message, callback) {
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMessage').textContent = message;
             confirmCallback = callback;
             document.getElementById('confirmModal').classList.add('active');
         }
-
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').classList.remove('active');
-            confirmCallback = null;
-        }
-
-        // 确认按钮点击
+        function closeConfirmModal() { document.getElementById('confirmModal').classList.remove('active'); confirmCallback = null; }
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('confirmOkBtn');
-            if (btn) {
-                btn.onclick = () => {
-                    if (confirmCallback) confirmCallback();
-                    closeConfirmModal();
-                };
-            }
-            // 初始化时检查全局欺骗状态
+            if (btn) btn.onclick = () => { if (confirmCallback) confirmCallback(); closeConfirmModal(); };
             checkGlobalSpoofStatus();
         });
 
-        // ============================================================
-        // 全局流量监控模式（全局ARP欺骗）
-        // ============================================================
-
         let globalSpoofEnabled = false;
-
         async function checkGlobalSpoofStatus() {
             try {
                 const res = await fetch('/api/global-spoof/status');
@@ -1469,57 +940,42 @@
                 updateGlobalSpoofUI();
             } catch(e) { console.error(e); }
         }
-
         function updateGlobalSpoofUI() {
             const btn = document.getElementById('globalSpoofBtn');
             const status = document.getElementById('globalSpoofStatus');
             const tip = document.getElementById('gatewayTip');
-
             if (globalSpoofEnabled) {
                 btn.innerHTML = '⏹️ 关闭全局流量监控';
                 btn.style.background = 'linear-gradient(135deg,#f44336,#c62828)';
                 status.innerHTML = '<span style="color:#4caf50;">● 运行中 - 所有设备流量正在经过 Orange Pi</span>';
-                if (tip) {
-                    tip.style.borderLeftColor = '#4caf50';
-                }
+                if (tip) tip.style.borderLeftColor = '#4caf50';
             } else {
                 btn.innerHTML = '🚀 开启全局流量监控模式';
                 btn.style.background = 'linear-gradient(135deg,#4caf50,#2e7d32)';
                 status.textContent = '未开启';
-                if (tip) {
-                    tip.style.borderLeftColor = '#ff9800';
-                }
+                if (tip) tip.style.borderLeftColor = '#ff9800';
             }
         }
-
         async function toggleGlobalSpoof() {
             const btn = document.getElementById('globalSpoofBtn');
             btn.disabled = true;
             btn.textContent = globalSpoofEnabled ? '正在关闭...' : '正在开启...';
-
             try {
                 const url = globalSpoofEnabled ? '/api/global-spoof/disable' : '/api/global-spoof/enable';
-                const res = await fetch(url, { method: 'POST' });
+                const res = await fetch(url, {method: 'POST'});
                 const data = await res.json();
-
                 if (data.success) {
                     globalSpoofEnabled = data.status.enabled;
                     updateGlobalSpoofUI();
                     alert(globalSpoofEnabled
-                        ? '✅ 全局流量监控模式已开启！\n\n所有设备流量将自动经过 Orange Pi，几秒钟后流量统计将开始显示实时数据。\n\n注意：Orange Pi 必须保持运行，关闭后设备网络会自动恢复。'
+                        ? '✅ 全局流量监控模式已开启！\n\n所有设备流量将自动经过 Orange Pi，几秒钟后流量统计将开始显示实时数据。'
                         : '✅ 全局流量监控模式已关闭！\n\n所有设备的网络已恢复正常（直接连接路由器）。');
-                } else {
-                    alert('❌ 操作失败: ' + (data.error || '未知错误'));
-                }
-            } catch(e) {
-                alert('❌ 操作失败: ' + e.message);
-            }
-
+                } else alert('❌ 操作失败: ' + (data.error || '未知错误'));
+            } catch(e) { alert('❌ 操作失败: ' + e.message); }
             btn.disabled = false;
             updateGlobalSpoofUI();
         }
 
-        // 流量排行
         let rankingDays = 7;
         async function loadRanking() {
             try {
@@ -1527,53 +983,34 @@
                 const res = await fetch(`/api/traffic-ranking?days=${rankingDays}&sort=${sort}`);
                 const data = await res.json();
                 const ranking = data.ranking;
-                
                 const container = document.getElementById('rankingList');
-                if (ranking.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div>暂无流量数据</div>';
-                    return;
-                }
-
+                if (ranking.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div>暂无流量数据</div>'; return; }
                 const maxTraffic = Math.max(...ranking.map(d => d.total_upload + d.total_download), 1);
                 const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
-
                 container.innerHTML = ranking.map((d, i) => {
                     const total = d.total_upload + d.total_download;
                     const percent = (total / maxTraffic * 100).toFixed(1);
                     const rankColor = i < 3 ? rankColors[i] : '#666';
                     const rankBg = i < 3 ? 'rgba(255,152,0,0.1)' : 'rgba(255,255,255,0.03)';
                     return `
-                    <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.2s;" 
-                         onclick="showDeviceDetail('${d.mac}')" 
-                         onmouseover="this.style.background='rgba(102,126,234,0.05)'" 
-                         onmouseout="this.style.background='transparent'">
+                    <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.2s;" onclick="showDeviceDetail('${d.mac}')" onmouseover="this.style.background='rgba(102,126,234,0.05)'" onmouseout="this.style.background='transparent'">
                         <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:${rankBg};font-weight:700;color:${rankColor};font-size:18px;margin-right:14px;flex-shrink:0;">${i+1}</div>
                         <div style="flex:1;min-width:0;">
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                                 <span style="font-weight:600;font-size:14px;">${d.name || d.vendor || '未知设备'}</span>
                                 <span style="font-size:11px;color:#888;font-family:monospace;">${d.ip || '-'}</span>
-                                ${d.is_online ? '<span style="font-size:10px;color:#4caf50;">●在线</span>' : '<span style="font-size:10px;color:#666;">○离线</span>'}
-                            </div>
+                                ${d.is_online ? '<span style="font-size:10px;color:#4caf50;">●在线</span>' : '<span style="font-size:10px;color:#666;">○离线</span>'}</div>
                             <div style="display:flex;align-items:center;gap:12px;">
                                 <div style="flex:1;background:rgba(255,255,255,0.08);height:8px;border-radius:4px;overflow:hidden;">
-                                    <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${percent}%;border-radius:4px;transition:width 0.5s;"></div>
-                                </div>
-                                <span style="font-size:12px;color:#aaa;min-width:80px;text-align:right;">总 ${d.total_str}</span>
-                            </div>
+                                    <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${percent}%;border-radius:4px;transition:width 0.5s;"></div></div>
+                                <span style="font-size:12px;color:#aaa;min-width:80px;text-align:right;">总 ${d.total_str}</span></div>
                             <div style="display:flex;gap:16px;margin-top:4px;font-size:11px;">
                                 <span style="color:#ff9800;">↑ ${d.total_upload_str}</span>
-                                <span style="color:#2196f3;">↓ ${d.total_download_str}</span>
-                            </div>
-                        </div>
-                    </div>
-                    `;
+                                <span style="color:#2196f3;">↓ ${d.total_download_str}</span></div></div>
+                    </div>`;
                 }).join('');
-            } catch(e) {
-                console.error('加载流量排行失败:', e);
-                document.getElementById('rankingList').innerHTML = '<div class="empty-state">加载失败</div>';
-            }
+            } catch(e) { console.error('加载流量排行失败:', e); document.getElementById('rankingList').innerHTML = '<div class="empty-state">加载失败</div>'; }
         }
-
         function switchRankingPeriod(btn, days) {
             document.querySelectorAll('#tab-ranking .tab-sub-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -1581,7 +1018,6 @@
             loadRanking();
         }
 
-        // 加载事件
         async function loadEvents() {
             try {
                 const res = await fetch('/api/events?limit=200');
@@ -1594,299 +1030,168 @@
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <span class="event-type event-${e.event_type}">${e.event_type === 'first_seen' ? '🆕 首次发现' : e.event_type === 'disconnect' ? '📴 离线' : '🔗 连接'}</span>
                                 <span style="font-size:13px;">${e.device_ip || ''}</span>
-                                <span style="font-size:11px;color:#666;font-family:monospace;">${e.device_mac}</span>
-                            </div>
-                            <span style="font-size:11px;color:#666;">${e.time_str}</span>
-                        </div>
-                    `).join('');
+                                <span style="font-size:11px;color:#666;font-family:monospace;">${e.device_mac}</span></div>
+                            <span style="font-size:11px;color:#666;">${e.time_str}</span></div>`).join('');
             } catch(e) { console.error(e); }
         }
 
-        // 立即扫描
         async function scanNow() {
             const btn = event.target;
-            btn.textContent = '扫描中...';
-            btn.disabled = true;
-            try {
-                await fetch('/api/scan', { method: 'POST' });
-                await loadDevices();
-                await loadSummary();
-            } catch(e) { console.error(e); }
-            btn.textContent = '🔄 立即扫描';
-            btn.disabled = false;
+            btn.textContent = '扫描中...'; btn.disabled = true;
+            try { await fetch('/api/scan', {method: 'POST'}); await loadDevices(); await loadSummary(); }
+            catch(e) { console.error(e); }
+            btn.textContent = '🔄 立即扫描'; btn.disabled = false;
         }
 
-        // 流量趋势图
         function initTrafficChart() {
             const ctx = document.getElementById('trafficChart');
             trafficChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        {
-                            label: '上传 (KB/s)',
-                            data: [],
-                            borderColor: '#ff9800',
-                            backgroundColor: 'rgba(255,152,0,0.15)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 5,
-                            borderWidth: 2
-                        },
-                        {
-                            label: '下载 (KB/s)',
-                            data: [],
-                            borderColor: '#2196f3',
-                            backgroundColor: 'rgba(33,150,243,0.15)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 5,
-                            borderWidth: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: {
-                        legend: { labels: { color: '#aaa', usePointStyle: true, padding: 15 } },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#ddd',
-                            borderColor: 'rgba(255,255,255,0.1)',
-                            borderWidth: 1,
-                            padding: 12,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' KB/s';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: '#888', maxTicksLimit: 8, font: { size: 11 } },
-                            grid: { color: 'rgba(255,255,255,0.05)' }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#888',
-                                font: { size: 11 },
-                                callback: function(value) {
-                                    if (value >= 1024) return (value/1024).toFixed(1) + ' MB/s';
-                                    return value.toFixed(0) + ' KB/s';
-                                }
-                            },
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            beginAtZero: true,
-                            suggestedMax: 100
-                        }
-                    },
-                    animation: { duration: 300 }
-                }
+                data: { labels: [], datasets: [
+                    { label: '上传 (KB/s)', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255,152,0,0.15)', fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 },
+                    { label: '下载 (KB/s)', data: [], borderColor: '#2196f3', backgroundColor: 'rgba(33,150,243,0.15)', fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+                    plugins: { legend: { labels: { color: '#aaa', usePointStyle: true, padding: 15 } },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#ddd', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 12,
+                            callbacks: { label: function(context) { return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' KB/s'; } } } },
+                    scales: { x: { ticks: { color: '#888', maxTicksLimit: 8, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                              y: { ticks: { color: '#888', font: { size: 11 }, callback: function(value) { if (value >= 1024) return (value/1024).toFixed(1) + ' MB/s'; return value.toFixed(0) + ' KB/s'; } },
+                                   grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true, suggestedMax: 100 } },
+                    animation: { duration: 300 } }
             });
         }
-
         function updateTrafficChart() {
             const online = allDevices.filter(d => d.is_online);
             const totalUp = online.reduce((s, d) => s + (d.current_upload_rate || 0), 0);
             const totalDown = online.reduce((s, d) => s + (d.current_download_rate || 0), 0);
             const now = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
             trafficHistory.push({ time: now, up: totalUp, down: totalDown });
             if (trafficHistory.length > 60) trafficHistory.shift();
-
             trafficChart.data.labels = trafficHistory.map(d => d.time);
             trafficChart.data.datasets[0].data = trafficHistory.map(d => d.up);
             trafficChart.data.datasets[1].data = trafficHistory.map(d => d.down);
             trafficChart.update('none');
         }
+        function updateTime() { document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN'); }
 
-        // 时间更新
-        function updateTime() {
-            document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN');
-        }
-
-        // ============================================================
-        // 周期流量统计功能
-        // ============================================================
-
-        function openPeriodModal() {
-            document.getElementById('periodModal').style.display = 'flex';
-            loadPeriodData();
-        }
-
-        function closePeriodModal() {
-            document.getElementById('periodModal').style.display = 'none';
-        }
-
+        function openPeriodModal() { document.getElementById('periodModal').style.display = 'flex'; loadPeriodData(); }
+        function closePeriodModal() { document.getElementById('periodModal').style.display = 'none'; }
         function onPeriodTypeChange() {
             const type = document.querySelector('input[name="periodType"]:checked').value;
             document.getElementById('customDaysInput').style.display = type === 'custom' ? 'flex' : 'none';
         }
-
-        // 自动清零开关
         function toggleAutoReset() {
             const toggle = document.getElementById('autoResetToggle');
             const slider = document.getElementById('autoResetSlider');
             const knob = document.getElementById('autoResetKnob');
             toggle.checked = !toggle.checked;
-            if (toggle.checked) {
-                slider.style.background = '#4caf50';
-                knob.style.transform = 'translateX(20px)';
-            } else {
-                slider.style.background = '#555';
-                knob.style.transform = 'translateX(0)';
-            }
+            if (toggle.checked) { slider.style.background = '#4caf50'; knob.style.transform = 'translateX(20px)'; }
+            else { slider.style.background = '#555'; knob.style.transform = 'translateX(0)'; }
         }
-
         function setAutoResetUI(enabled) {
             const toggle = document.getElementById('autoResetToggle');
             const slider = document.getElementById('autoResetSlider');
             const knob = document.getElementById('autoResetKnob');
             toggle.checked = enabled;
-            if (enabled) {
-                slider.style.background = '#4caf50';
-                knob.style.transform = 'translateX(20px)';
-            } else {
-                slider.style.background = '#555';
-                knob.style.transform = 'translateX(0)';
-            }
+            if (enabled) { slider.style.background = '#4caf50'; knob.style.transform = 'translateX(20px)'; }
+            else { slider.style.background = '#555'; knob.style.transform = 'translateX(0)'; }
         }
-
         async function loadPeriodData() {
             try {
                 const res = await fetch('/api/period-summary');
                 const data = await res.json();
-
-                // 更新当前周期
                 document.getElementById('currentPeriodLabel').textContent = data.current.period_label + ' 流量统计';
                 document.getElementById('currentUpload').textContent = data.current.total_upload_str;
                 document.getElementById('currentDownload').textContent = data.current.total_download_str;
                 document.getElementById('currentTotal').textContent = data.current.total_str;
                 document.getElementById('currentPeriodTime').textContent = '开始时间：' + data.current.start_time_str;
-
-                // 更新设置
                 const type = data.settings.period_type;
                 document.querySelector(`input[name="periodType"][value="${type}"]`).checked = true;
                 document.getElementById('customDaysInput').style.display = type === 'custom' ? 'flex' : 'none';
                 document.getElementById('customDays').value = data.settings.custom_days;
                 document.getElementById('quickPeriodSelect').value = type;
                 setAutoResetUI(data.settings.auto_reset !== false);
-
-                // 更新历史
                 const historyList = document.getElementById('periodHistoryList');
                 if (data.history && data.history.length > 0) {
                     historyList.innerHTML = data.history.map(p => `
                         <div class="period-history-item ${p.is_current ? 'current' : ''}">
-                            <div>
-                                <div class="period-history-label">${p.period_label} ${p.is_current ? '(当前)' : ''}</div>
-                                <div class="period-history-time">${p.start_time_str || '-'} ${p.end_time_str ? '~ ' + p.end_time_str : '至今'}</div>
-                            </div>
-                            <div class="period-history-traffic">${p.total_str || '0 B'}</div>
-                        </div>
-                    `).join('');
-                } else {
-                    historyList.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">暂无历史数据</div>';
-                }
-
-                // 更新仪表盘上的总流量显示
+                            <div><div class="period-history-label">${p.period_label} ${p.is_current ? '(当前)' : ''}</div>
+                            <div class="period-history-time">${p.start_time_str || '-'} ${p.end_time_str ? '~ ' + p.end_time_str : '至今'}</div></div>
+                            <div class="period-history-traffic">${p.total_str || '0 B'}</div></div>`).join('');
+                } else historyList.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">暂无历史数据</div>';
                 document.getElementById('periodTotalValue').textContent = data.current.total_str;
                 document.getElementById('periodLabel').textContent = data.current.period_label + ' · 上传 + 下载';
-            } catch(e) {
-                console.error('加载周期数据失败:', e);
-            }
+            } catch(e) { console.error('加载周期数据失败:', e); }
         }
-
         async function quickSetPeriod(type) {
             const customDays = parseInt(document.getElementById('customDays').value) || 30;
             const autoReset = document.getElementById('autoResetToggle').checked;
             try {
-                const res = await fetch('/api/period-settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({period_type: type, custom_days: customDays, auto_reset: autoReset})
-                });
+                const res = await fetch('/api/period-settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({period_type: type, custom_days: customDays, auto_reset: autoReset})});
                 const data = await res.json();
-                if (data.success) {
-                    loadPeriodData();
-                }
-            } catch(e) {
-                console.error('切换周期失败:', e);
-            }
+                if (data.success) loadPeriodData();
+            } catch(e) { console.error('切换周期失败:', e); }
         }
-
         async function savePeriodSettings() {
             const type = document.querySelector('input[name="periodType"]:checked').value;
             const customDays = parseInt(document.getElementById('customDays').value) || 30;
             const autoReset = document.getElementById('autoResetToggle').checked;
-
             try {
-                const res = await fetch('/api/period-settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({period_type: type, custom_days: customDays, auto_reset: autoReset})
-                });
+                const res = await fetch('/api/period-settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({period_type: type, custom_days: customDays, auto_reset: autoReset})});
                 const data = await res.json();
-                if (data.success) {
-                    alert('周期设置已保存（流量数据保留，如需清零请点击"立即清零"）');
-                    loadPeriodData();
-                }
-            } catch(e) {
-                console.error('保存周期设置失败:', e);
-                alert('保存失败');
-            }
+                if (data.success) { alert('周期设置已保存（流量数据保留，如需清零请点击"立即清零"）'); loadPeriodData(); }
+            } catch(e) { console.error('保存周期设置失败:', e); alert('保存失败'); }
         }
-
         async function resetPeriod() {
             if (!confirm('确定要立即清零当前周期的流量统计吗？')) return;
             try {
                 const res = await fetch('/api/period-reset', {method: 'POST'});
                 const data = await res.json();
-                if (data.success) {
-                    alert('流量已清零，当前周期数据已保存到历史');
-                    loadPeriodData();
-                }
-            } catch(e) {
-                console.error('清零失败:', e);
-                alert('清零失败');
-            }
+                if (data.success) { alert('流量已清零，当前周期数据已保存到历史'); loadPeriodData(); }
+            } catch(e) { console.error('清零失败:', e); alert('清零失败'); }
+        }
+        document.getElementById('periodModal').addEventListener('click', function(e) { if (e.target === this) closePeriodModal(); });
+
+        async function loadBrowsingHistory() {
+            const content = document.getElementById('browsingContent');
+            content.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">加载中...</p>';
+            try {
+                const res = await fetch('/api/browsing-history?limit=1000');
+                const data = await res.json();
+                if (data.error) { content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">' + data.error + '</p>'; return; }
+                document.getElementById('browsingInfo').textContent = '共 ' + data.total_devices + ' 台设备';
+                if (!data.devices || data.devices.length === 0) { content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌐</div>暂无浏览记录</div>'; return; }
+                content.innerHTML = data.devices.map(function(dev, idx) {
+                    var blockRate = dev.total_queries > 0 ? ((dev.blocked_count / dev.total_queries) * 100).toFixed(1) : 0;
+                    var topDomains = (dev.top_domains || []).slice(0, 15).map(function(d) {
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;">' +
+                            '<span style="font-family:monospace;' + (d.blocked > 0 ? 'color:#e74c3c;text-decoration:line-through;' : '') + '">' + d.domain + '</span>' +
+                            '<span style="color:#888;font-size:12px;">' + d.count + '次 ' + (d.blocked > 0 ? '🚫' + d.blocked : '') + '</span></div>';
+                    }).join('');
+                    return '<div style="margin-bottom:16px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;">' +
+                        '<div style="background:rgba(102,126,234,0.1);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="document.getElementById(\'browse-' + idx + '\').style.display=document.getElementById(\'browse-' + idx + '\').style.display===\'none\'?\'block\':\'none\'">' +
+                        '<span style="font-size:18px;">📱</span>' +
+                        '<div style="flex:1;"><div style="font-weight:600;">' + dev.ip + '</div>' +
+                        '<div style="font-size:11px;color:#888;">查询 ' + dev.total_queries + ' 次 | 拦截 ' + dev.blocked_count + ' 次 (' + blockRate + '%)</div></div>' +
+                        '<span style="color:#888;font-size:12px;">点击展开 ▼</span></div>' +
+                        '<div id="browse-' + idx + '" style="display:none;background:rgba(0,0,0,0.15);max-height:400px;overflow-y:auto;">' +
+                        (topDomains || '<p style="padding:20px;text-align:center;color:#666;">暂无域名记录</p>') +
+                        '</div></div>';
+                }).join('');
+            } catch(e) { content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">加载失败: ' + e.message + '</p>'; console.error('加载浏览记录失败:', e); }
         }
 
-        // 点击弹窗外部关闭
-        document.getElementById('periodModal').addEventListener('click', function(e) {
-            if (e.target === this) closePeriodModal();
-        });
-
-        // 初始化
         async function init() {
             initTrafficChart();
             updateTime();
             setInterval(updateTime, 1000);
-
             await loadSummary();
             await loadDevices();
-
-            // 定时刷新
-            setInterval(async () => {
-                await loadSummary();
-                await loadDevices();
-                updateTrafficChart();
-            }, 5000);
-
+            setInterval(async () => { await loadSummary(); await loadDevices(); updateTrafficChart(); }, 5000);
             setInterval(updateTrafficChart, 10000);
         }
-
-        // 点击弹窗外部关闭
-        document.getElementById('deviceModal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
-        });
-
+        document.getElementById('deviceModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         init();
     </script>
 </body>
