@@ -1,41 +1,27 @@
 """
-NetPulse - 网络设备管理系统
-配置文件
+NetPulse - 配置文件
 """
 import os
 
-# 基础配置
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "netpulse.db")
-LOG_PATH = os.path.join(BASE_DIR, "netpulse.log")
-
-# Web服务
-WEB_HOST = "0.0.0.0"
+# Web服务配置
+WEB_HOST = '0.0.0.0'
 WEB_PORT = 8081
+ADMIN_PASSWORD = 'admin'
 
-# 扫描配置
-SCAN_INTERVAL = 30          # 设备扫描间隔（秒）
-TRAFFIC_INTERVAL = 3        # 流量统计间隔（秒，更精确的实时速率）
-PING_TIMEOUT = 1             # ping超时（秒）
-PING_COUNT = 1               # ping次数
+# 数据库路径
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'netpulse.db')
+
+# 数据保留天数
+HOURLY_RETENTION_DAYS = 7
+DAILY_RETENTION_DAYS = 90
 
 # 网络配置
-NETWORK_CIDR = "192.168.1.0/24"
-NETWORK_GATEWAY = "192.168.1.1"
-MONITOR_INTERFACE = "eth0"   # 主要监控网口
+GATEWAY_IP = '192.168.1.1'
+LOCAL_MAC = '02:81:05:09:f7:8c'
+MANAGE_INTERFACE = 'eth0'
 
-# 设备管理配置
-GATEWAY_IP = "192.168.1.1"           # 网关IP
-LOCAL_MAC = "02:00:ab:e1:aa:9d"      # 本机eth0 MAC地址
-MANAGE_INTERFACE = "eth0"            # 设备管理网口（流量经过的接口，必须与实际连接路由器的网口一致）
-
-# 流量统计
-TRAFFIC_CHAIN = "NETPULSE"   # iptables自定义链名
-HOURLY_RETENTION_DAYS = 7    # 小时数据保留天数
-DAILY_RETENTION_DAYS = 90    # 天数据保留天数
-
-# 设备状态判定
-OFFLINE_THRESHOLD = 120      # 超过多少秒未检测到视为离线（秒）
-
-# 管理员密码（首次登录使用，可在界面修改）
-ADMIN_PASSWORD = "admin123"
+# ARP欺骗白名单（这些设备不被欺骗，例如摄像头等需要稳定连接的设备）
+SPOOF_WHITELIST = [
+    '44:37:0b:1a:58:57',  # 小米智能摄像机 C500双摄版
+]

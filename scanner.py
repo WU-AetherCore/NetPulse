@@ -1,188 +1,107 @@
 """
 NetPulse - 设备扫描模块
-通过ARP扫描和ping扫描发现局域网设备
+扫描局域网内所有设备
 """
 import subprocess
-import re
-import time
 import threading
-from config import NETWORK_CIDR, PING_TIMEOUT, PING_COUNT, OFFLINE_THRESHOLD
-from database import upsert_device, mark_device_offline, record_connection_event
-
-
-# OUI厂商识别（常用前缀）
-OUI_DATABASE = {
-    "4c:d2:fb": "中国移动",
-    "44:f7:70": "小米路由器",
-    "f8:29:eb": "Orange Pi",
-    "02:00:ab": "Orange Pi",
-    "d2:41:30": "Android设备",
-    "de:ef:0e": "Android设备",
-    "42:b3:9a": "Android设备",
-    "4c:03:4f": "Android设备",
-    "e6:f8:95": "Android设备",
-    "c8:75:f4": "华为设备",
-    "a4:50:46": "小米手机",
-    "64:09:80": "小米手机",
-    "9c:99:a0": "小米手机",
-    "f0:99:bf": "OPPO手机",
-    "94:65:2d": "VIVO手机",
-    "68:54:5a": "苹果设备",
-    "3c:22:fb": "苹果设备",
-    "a4:83:e7": "苹果设备",
-    "00:11:32": "群晖NAS",
-    "00:17:88": "飞利浦Hue",
-    "b8:27:eb": "树莓派",
-    "dc:a6:32": "树莓派4",
-    "e4:5f:01": "树莓派400",
-}
-
-
-def get_vendor(mac):
-    """根据MAC地址前3字节识别厂商"""
-    if not mac or len(mac) < 8:
-        return "未知设备"
-    oui = mac.lower()[:8]
-    return OUI_DATABASE.get(oui, "未知设备")
-
-
-def read_arp_table():
-    """读取ARP表"""
-    devices = {}
-    try:
-        result = subprocess.run(
-            ["ip", "neigh", "show"],
-            capture_output=True, text=True, timeout=10
-        )
-        for line in result.stdout.strip().split('\n'):
-            if not line or 'FAILED' in line:
-                continue
-            parts = line.split()
-            if len(parts) >= 4 and 'lladdr' in line:
-                ip = parts[0]
-                mac_idx = parts.index('lladdr') + 1
-                if mac_idx < len(parts):
-                    mac = parts[mac_idx]
-                    if mac and mac != '00:00:00:00:00:00':
-                        is_ipv4 = '.' in ip and ':' not in ip
-                        if mac not in devices or is_ipv4:
-                            devices[mac] = ip
-    except Exception as e:
-        print(f"读取ARP表失败: {e}")
-    return devices
-
-
-def ping_scan():
-    """ping扫描所有网段（快速唤醒设备）"""
-    try:
-        result = subprocess.run(
-            ["bash", "-c",
-             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.1.$i >/dev/null 2>&1 & done; "
-             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.0.$i >/dev/null 2>&1 & done; wait"],
-            capture_output=True, text=True, timeout=20
-        )
-    except Exception as e:
-        print(f"ping扫描失败: {e}")
-
-
-def scan_routed_devices():
-    """扫描路由网段设备（非直连，通过路由可达的设备）"""
-    routed = {}
-    try:
-        result = subprocess.run(
-            ["bash", "-c",
-             "for i in $(seq 1 254); do "
-             "  if ping -c 1 -W 1 192.168.0.$i >/dev/null 2>&1; then "
-             "    echo 192.168.0.$i; "
-             "  fi & "
-             "done; wait"],
-            capture_output=True, text=True, timeout=20
-        )
-        for line in result.stdout.strip().split('\n'):
-            ip = line.strip()
-            if ip and '.' in ip:
-                parts = ip.split('.')
-                virtual_mac = f"00:00:00:{int(parts[1]):02x}:{int(parts[2]):02x}:{int(parts[3]):02x}"
-                routed[virtual_mac] = ip
-    except Exception as e:
-        print(f"路由网段扫描失败: {e}")
-    return routed
-
-
-def add_self_device():
-    """自动把自己（Orange Pi）添加到设备列表"""
-    try:
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-
-        mac = None
-        for iface in ['eth0', 'wlan0']:
-            try:
-                with open(f'/sys/class/net/{iface}/address', 'r') as f:
-                    mac = f.read().strip()
-                    break
-            except:
-                continue
-
-        if local_ip and mac:
-            from database import upsert_device
-            upsert_device(mac, local_ip, name='Orange Pi Zero2', vendor='Orange Pi')
-            print(f"[Scanner] 已添加本机设备: {local_ip} ({mac})")
-    except Exception as e:
-        print(f"[Scanner] 添加本机设备失败: {e}")
+import time
+import re
+from database import upsert_device, mark_device_offline, get_all_devices
 
 
 def scan_devices():
-    """扫描所有设备"""
-    add_self_device()
-    ping_scan()
-    time.sleep(1)
-
-    arp_devices = read_arp_table()
-    routed_devices = scan_routed_devices()
-
-    for mac, ip in arp_devices.items():
-        vendor = get_vendor(mac)
-        upsert_device(mac, ip, vendor=vendor)
-
-    for mac, ip in routed_devices.items():
-        if mac not in arp_devices:
-            upsert_device(mac, ip, name='路由设备', vendor='跨网段设备')
-
-    check_offline_devices()
-
-    return {**arp_devices, **routed_devices}
-
-
-def check_offline_devices():
-    """检查并标记离线设备"""
-    from database import get_all_devices
-    now = int(time.time())
-    devices = get_all_devices()
+    """扫描局域网设备（使用nmap或arp-scan）"""
+    devices = []
+    
+    # 方法1: 使用nmap快速扫描
+    try:
+        result = subprocess.run(
+            ['nmap', '-sn', '192.168.1.0/24', '-T4', '--min-parallelism', '50'],
+            capture_output=True, text=True, timeout=60
+        )
+        # 解析nmap输出
+        lines = result.stdout.split('\n')
+        current_ip = None
+        for line in lines:
+            if 'Nmap scan report for' in line:
+                match = re.search(r'192\.168\.1\.(\d+)', line)
+                if match:
+                    current_ip = f'192.168.1.{match.group(1)}'
+            elif 'MAC Address:' in line and current_ip:
+                mac_match = re.search(r'([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})', line)
+                if mac_match:
+                    mac = mac_match.group(1).lower()
+                    vendor = ''
+                    vendor_match = re.search(r'MAC Address:.*\((.*)\)', line)
+                    if vendor_match:
+                        vendor = vendor_match.group(1)
+                    devices.append({'ip': current_ip, 'mac': mac, 'vendor': vendor})
+                    current_ip = None
+    except Exception as e:
+        print(f"nmap扫描失败: {e}")
+    
+    # 方法2: 如果nmap没找到，用arp-scan
+    if not devices:
+        try:
+            result = subprocess.run(
+                ['arp-scan', '--localnet', '--interface=eth0'],
+                capture_output=True, text=True, timeout=30
+            )
+            for line in result.stdout.split('\n'):
+                parts = line.split()
+                if len(parts) >= 2 and re.match(r'([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}', parts[1]):
+                    ip = parts[0]
+                    mac = parts[1].lower()
+                    vendor = parts[2] if len(parts) > 2 else ''
+                    devices.append({'ip': ip, 'mac': mac, 'vendor': vendor})
+        except Exception as e:
+            print(f"arp-scan失败: {e}")
+    
+    # 方法3: 从ARP表补充
+    try:
+        result = subprocess.run(['arp', '-n'], capture_output=True, text=True, timeout=10)
+        arp_ips = set(d['ip'] for d in devices)
+        for line in result.stdout.split('\n')[1:]:
+            parts = line.split()
+            if len(parts) >= 3 and '192.168.1.' in parts[0]:
+                ip = parts[0]
+                mac = parts[2].lower()
+                if ip not in arp_ips and mac != '(incomplete)':
+                    devices.append({'ip': ip, 'mac': mac, 'vendor': ''})
+    except Exception as e:
+        print(f"ARP表读取失败: {e}")
+    
+    # 更新数据库
     for dev in devices:
-        if dev['is_online'] and (now - dev['last_seen']) > OFFLINE_THRESHOLD:
-            mark_device_offline(dev['mac'])
+        upsert_device(dev['mac'], dev['ip'], dev.get('vendor', ''))
+    
+    # 标记离线设备
+    all_devs = get_all_devices()
+    online_macs = set(d['mac'] for d in devices)
+    for dev in all_devs:
+        if dev['mac'] not in online_macs and dev['is_online']:
+            # 只有超过5分钟没更新的才标记离线
+            if time.time() - dev['last_seen'] > 300:
+                mark_device_offline(dev['mac'])
+    
+    return devices
 
 
 class Scanner(threading.Thread):
     """后台扫描线程"""
+    
     def __init__(self, interval=30):
         super().__init__(daemon=True)
         self.interval = interval
         self.running = True
-
+    
     def run(self):
-        print(f"[Scanner] 设备扫描线程启动，间隔{self.interval}秒")
         while self.running:
             try:
-                devices = scan_devices()
-                print(f"[Scanner] 扫描完成，发现{len(devices)}台设备")
+                scan_devices()
             except Exception as e:
-                print(f"[Scanner] 扫描异常: {e}")
+                print(f"扫描错误: {e}")
             time.sleep(self.interval)
-
+    
     def stop(self):
         self.running = False

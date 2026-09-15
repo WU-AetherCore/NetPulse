@@ -63,6 +63,10 @@ def init_db():
         c.execute("ALTER TABLE devices ADD COLUMN wifi_band TEXT DEFAULT 'unknown'")
     except:
         pass
+    try:
+        c.execute("ALTER TABLE devices ADD COLUMN priority TEXT DEFAULT 'medium'")
+    except:
+        pass
 
     # 小时流量表
     c.execute("""
@@ -147,6 +151,8 @@ def init_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_events_mac ON connection_events(device_mac)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_events_time ON connection_events(timestamp)")
 
+    
+    c.execute('CREATE TABLE IF NOT EXISTS speedtest_history (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, download_speed REAL NOT NULL, upload_speed REAL NOT NULL, ping REAL DEFAULT 0, server TEXT DEFAULT \'\')')
     conn.commit()
     conn.close()
 
@@ -730,3 +736,32 @@ def get_period_summary():
         },
         'history': history
     }
+
+
+def add_speedtest_result(download_speed, upload_speed, ping=0, server=''):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO speedtest_history (timestamp, download_speed, upload_speed, ping, server) VALUES (?, ?, ?, ?, ?)',
+        (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), download_speed, upload_speed, ping, server))
+    conn.commit()
+    cursor.execute('DELETE FROM speedtest_history WHERE id NOT IN (SELECT id FROM speedtest_history ORDER BY id DESC LIMIT 20)')
+    conn.commit()
+    conn.close()
+    return True
+
+def get_speedtest_history(limit=20):
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM speedtest_history ORDER BY id DESC LIMIT ?', (limit,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+def clear_speedtest_history():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM speedtest_history')
+    conn.commit()
+    conn.close()
+    return True
