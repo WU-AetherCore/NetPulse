@@ -221,6 +221,7 @@ def get_blocked_devices():
                     blocked.add(parts[3].split('/')[0])
     return list(blocked)
 
+
 # ============================================================
 # tc 限速模块
 # ============================================================
@@ -549,7 +550,7 @@ def ensure_global_spoof_running():
     if global_spoof_thread:
         global_spoof_thread.join(timeout=3)
     global_spoof_thread = None
-global_spoof_enabled = False
+    global_spoof_enabled = False
 
     # 重新启动
     time.sleep(1)
@@ -712,3 +713,257 @@ def get_qos_status():
             rules.append(line.strip())
 
     return {'classes': classes, 'rules': rules}
+
+
+# ============================================================
+# IPv6 NDP 欺骗模块（让IPv6流量也经过Orange Pi）
+# ============================================================
+
+IPV6_GATEWAY = "fe80::1"  # 路由器的IPv6链路本地地址
+IPV6_SPOOF_ENABLED = False
+IPV6_SPOOF_THREAD = None
+IPV6_SPOOF_RUNNING = False
+IPV6_SPOOF_HEARTBEAT = 0
+
+
+def send_ra_advertisement(interface=MANAGE_INTERFACE):
+    """发送Router Advertisement消息，让设备以为Orange Pi是IPv6路由器"""
+    try:
+        from scapy.all import IPv6, ICMPv6ND_RA, ICMPv6NDOptPrefixInfo, send
+        from scapy.layers.inet6 import ICMPv6NDOptSrcLLAddr
+
+        # 获取本机IPv6链路本地地址
+        import subprocess
+        result = subprocess.run(["ip", "-6", "addr", "show", interface],
+                                capture_output=True, text=True)
+        local_ipv6 = ""
+        for line in result.stdout.split("\n"):
+            if "fe80::" in line and "scope link" in line:
+                local_ipv6 = line.split()[1].split("/")[0]
+                break
+
+        if not local_ipv6:
+            local_ipv6 = "fe80::1"
+
+        # 构造RA消息
+        ra = IPv6(src=local_ipv6, dst="ff02::1") / ICMPv6ND_RA(
+            routerlifetime=1800,  # 路由器生存时间30分钟
+            reachabletime=0,
+            retranstimer=0
+        ) / ICMPv6NDOptSrcLLAddr(lladdr=LOCAL_MAC)
+
+        # 添加前缀信息（使用当前IPv6前缀）
+        try:
+            prefix_info = ICMPv6NDOptPrefixInfo(
+                prefixlen=64,
+                L=1, A=1,
+                validlifetime=2592000,
+                preferredlifetime=604800,
+                prefix="2409:8a62:6925:d930::"
+            )
+            ra = ra / prefix_info
+        except Exception:
+            pass
+
+        send(ra, iface=interface, verbose=0)
+        return True
+    except Exception as e:
+        print(f"[IPv6Spoof] 发送RA失败: {e}")
+        return False
+
+
+def send_na_spoof(target_ipv6, target_mac, spoof_ipv6, interface=MANAGE_INTERFACE):
+    """发送Neighbor Advertisement欺骗消息"""
+    try:
+        from scapy.all import IPv6, ICMPv6ND_NA, send
+
+        na = IPv6(src=spoof_ipv6, dst=target_ipv6) / ICMPv6ND_NA(
+            tgt=spoof_ipv6,
+            S=1,  # 响应请求
+            R=0,  # 不是路由器
+            O=1   # 覆盖缓存
+        )
+        send(na, iface=interface, verbose=0)
+        return True
+    except Exception as e:
+        print(f"[IPv6Spoof] 发送NA失败: {e}")
+        return False
+
+
+def _ipv6_spoof_loop():
+    """IPv6 NDP欺骗线程"""
+    global IPV6_SPOOF_RUNNING, IPV6_SPOOF_HEARTBEAT
+    print("[IPv6Spoof] IPv6 NDP欺骗线程已启动")
+
+    while IPV6_SPOOF_RUNNING:
+        try:
+            IPV6_SPOOF_HEARTBEAT = time.time()
+
+            # 1. 定期发送RA消息，让设备把我们当作IPv6网关
+            send_ra_advertisement()
+
+            # 2. 对在线设备发送NA欺骗
+            try:
+                from database import get_all_devices
+                devices = get_all_devices()
+                for dev in devices:
+                    if dev.get('is_online') and dev.get('ip') and dev.get('mac'):
+                        ip = dev['ip']
+                        mac = dev['mac']
+                        # 跳过自己和网关
+                        if ip in ['192.168.1.10', GATEWAY_IP]:
+                            continue
+                        if mac.lower() in [m.lower() for m in SPOOF_WHITELIST]:
+                            continue
+                        # 构造设备的IPv6链路本地地址（基于MAC）
+                        # fe80:: + EUI-64
+                        try:
+                            mac_parts = mac.split(':')
+                            if len(mac_parts) == 6:
+                                first = int(mac_parts[0], 16) ^ 0x02  # 翻转U/L位
+                                target_ipv6 = f"fe80::{first:02x}{mac_parts[1]}:{mac_parts[2]}ff:fe{mac_parts[3]}:{mac_parts[4]}{mac_parts[5]}"
+                                send_na_spoof(target_ipv6, mac, IPV6_GATEWAY)
+                        except Exception:
+                            pass
+            except Exception as e:
+                print(f"[IPv6Spoof] 设备NA欺骗失败: {e}")
+
+            time.sleep(8)  # 每8秒发送一次
+
+        except Exception as e:
+            print(f"[IPv6Spoof] 欺骗循环错误: {e}")
+            time.sleep(5)
+
+    print("[IPv6Spoof] IPv6 NDP欺骗线程已停止")
+
+
+def enable_ipv6_forwarding():
+    """启用IPv6转发"""
+    try:
+        run_sudo("sysctl -w net.ipv6.conf.all.forwarding=1")
+        run_sudo("sysctl -w net.ipv6.conf.default.forwarding=1")
+        # 接受RA
+        run_sudo("sysctl -w net.ipv6.conf.all.accept_ra=2")
+        run_sudo("sysctl -w net.ipv6.conf.eth0.accept_ra=2")
+        print("[IPv6Spoof] IPv6转发已启用")
+        return True
+    except Exception as e:
+        print(f"[IPv6Spoof] 启用IPv6转发失败: {e}")
+        return False
+
+
+def start_ipv6_spoof():
+    """开启IPv6 NDP欺骗"""
+    global IPV6_SPOOF_ENABLED, IPV6_SPOOF_THREAD, IPV6_SPOOF_RUNNING, IPV6_SPOOF_HEARTBEAT
+
+    if IPV6_SPOOF_ENABLED:
+        print("[IPv6Spoof] IPv6欺骗已在运行中")
+        return True
+
+    # 启用IPv6转发
+    enable_ipv6_forwarding()
+
+    IPV6_SPOOF_RUNNING = True
+    IPV6_SPOOF_HEARTBEAT = time.time()
+    IPV6_SPOOF_THREAD = threading.Thread(target=_ipv6_spoof_loop, daemon=True)
+    IPV6_SPOOF_THREAD.start()
+    IPV6_SPOOF_ENABLED = True
+
+    print("[IPv6Spoof] IPv6 NDP欺骗已开启")
+    return True
+
+
+def stop_ipv6_spoof():
+    """关闭IPv6 NDP欺骗"""
+    global IPV6_SPOOF_ENABLED, IPV6_SPOOF_RUNNING
+
+    if not IPV6_SPOOF_ENABLED:
+        return True
+
+    IPV6_SPOOF_RUNNING = False
+    if IPV6_SPOOF_THREAD:
+        IPV6_SPOOF_THREAD.join(timeout=5)
+    IPV6_SPOOF_ENABLED = False
+    print("[IPv6Spoof] IPv6 NDP欺骗已关闭")
+    return True
+
+
+def ensure_ipv6_spoof_running():
+    """检查IPv6欺骗线程是否存活，死亡则自动重启"""
+    global IPV6_SPOOF_ENABLED, IPV6_SPOOF_THREAD, IPV6_SPOOF_RUNNING, IPV6_SPOOF_HEARTBEAT
+
+    if not IPV6_SPOOF_ENABLED:
+        return False
+
+    thread_alive = IPV6_SPOOF_THREAD is not None and IPV6_SPOOF_THREAD.is_alive()
+    heartbeat_ok = (time.time() - IPV6_SPOOF_HEARTBEAT) < 30 if IPV6_SPOOF_HEARTBEAT > 0 else False
+
+    if thread_alive and heartbeat_ok:
+        return True
+
+    print(f"[HealthCheck] IPv6欺骗异常！线程存活={thread_alive}, 心跳正常={heartbeat_ok}，正在重启...")
+    IPV6_SPOOF_RUNNING = False
+    if IPV6_SPOOF_THREAD:
+        IPV6_SPOOF_THREAD.join(timeout=3)
+    IPV6_SPOOF_THREAD = None
+    IPV6_SPOOF_ENABLED = False
+    time.sleep(1)
+    return start_ipv6_spoof()
+
+
+def get_ipv6_spoof_status():
+    """获取IPv6欺骗状态"""
+    thread_alive = IPV6_SPOOF_THREAD is not None and IPV6_SPOOF_THREAD.is_alive()
+    heartbeat_age = time.time() - IPV6_SPOOF_HEARTBEAT if IPV6_SPOOF_HEARTBEAT > 0 else -1
+    return {
+        "enabled": IPV6_SPOOF_ENABLED,
+        "running": IPV6_SPOOF_RUNNING,
+        "thread_alive": thread_alive,
+        "heartbeat_age": round(heartbeat_age, 1)
+    }
+
+
+def full_health_check():
+    """完整健康检查和自动修复（IPv4+IPv6）"""
+    results = {}
+
+    # 1. 检查IP转发
+    try:
+        result = subprocess.run(["cat", "/proc/sys/net/ipv4/ip_forward"],
+                                capture_output=True, text=True, timeout=5)
+        if result.stdout.strip() != "1":
+            run_sudo("sysctl -w net.ipv4.ip_forward=1")
+            results["ipv4_forward"] = "修复中"
+        else:
+            results["ipv4_forward"] = "正常"
+    except Exception as e:
+        results["ipv4_forward"] = f"错误: {e}"
+
+    # 2. 检查IPv6转发
+    try:
+        result = subprocess.run(["cat", "/proc/sys/net/ipv6/conf/all/forwarding"],
+                                capture_output=True, text=True, timeout=5)
+        if result.stdout.strip() != "1":
+            enable_ipv6_forwarding()
+            results["ipv6_forward"] = "修复中"
+        else:
+            results["ipv6_forward"] = "正常"
+    except Exception as e:
+        results["ipv6_forward"] = f"错误: {e}"
+
+    # 3. 检查ARP欺骗
+    results["arp_spoof"] = "正常" if ensure_global_spoof_running() else "异常"
+
+    # 4. 检查IPv6欺骗（如果全局监控开启）
+    if global_spoof_enabled:
+        if not IPV6_SPOOF_ENABLED:
+            start_ipv6_spoof()
+        results["ipv6_spoof"] = "正常" if ensure_ipv6_spoof_running() else "异常"
+    else:
+        results["ipv6_spoof"] = "未开启"
+
+    # 5. 检查NAT规则
+    results["nat"] = "正常" if ensure_nat_and_forwarding() else "异常"
+
+    print(f"[HealthCheck] 完整检查结果: {results}")
+    return results

@@ -29,6 +29,8 @@ from device_manager import (
     init_block_chain, init_tc, get_blocked_devices, get_limited_devices,
     start_global_spoof, stop_global_spoof, get_global_spoof_status,
     ensure_global_spoof_running, ensure_nat_and_forwarding,
+    start_ipv6_spoof, stop_ipv6_spoof, get_ipv6_spoof_status,
+    ensure_ipv6_spoof_running, full_health_check,
     set_device_priority, remove_device_priority, init_qos, get_qos_status,
     init_device_manager, cleanup_device_manager
 )
@@ -391,6 +393,7 @@ def api_band_stats():
     }
     return jsonify(result)
 
+
 @app.route('/api/traffic-ranking')
 def api_traffic_ranking():
     """获取设备流量排行榜
@@ -622,10 +625,16 @@ def api_global_spoof_enable():
     try:
         success = start_global_spoof()
         if success:
+            # 同时启动IPv6 NDP欺骗
+            try:
+                start_ipv6_spoof()
+            except Exception as e:
+                print(f"[IPv6] 启动IPv6欺骗失败: {e}")
             return jsonify({
                 "success": True,
-                "message": "全局流量监控模式已开启，所有设备流量将经过Orange Pi",
-                "status": get_global_spoof_status()
+                "message": "全局流量监控模式已开启（IPv4+IPv6双栈），所有设备流量将经过Orange Pi",
+                "status": get_global_spoof_status(),
+                "ipv6_status": get_ipv6_spoof_status()
             })
         else:
             return jsonify({"error": "开启失败"}), 500
@@ -639,10 +648,16 @@ def api_global_spoof_disable():
     try:
         success = stop_global_spoof()
         if success:
+            # 同时关闭IPv6欺骗
+            try:
+                stop_ipv6_spoof()
+            except Exception as e:
+                print(f"[IPv6] 关闭IPv6欺骗失败: {e}")
             return jsonify({
                 "success": True,
                 "message": "全局流量监控模式已关闭，设备网络已恢复",
-                "status": get_global_spoof_status()
+                "status": get_global_spoof_status(),
+                "ipv6_status": get_ipv6_spoof_status()
             })
         else:
             return jsonify({"error": "关闭失败"}), 500
@@ -665,6 +680,20 @@ def api_system():
     })
 
 
+@app.route('/api/health-check', methods=['POST'])
+def api_health_check():
+    """手动触发完整健康检查和自动修复"""
+    try:
+        results = full_health_check()
+        return jsonify({
+            "success": True,
+            "results": results,
+            "message": "健康检查完成，已自动修复发现的问题"
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 app_start_time = time.time()
 
 
@@ -675,15 +704,18 @@ def health_check_loop():
     while True:
         try:
             check_count += 1
-            # 每30秒检查一次ARP欺骗线程和NAT
+            # 每30秒执行完整健康检查（IPv4+IPv6双栈）
             if check_count % 3 == 0:  # 每30秒
-                ensure_global_spoof_running()
-                ensure_nat_and_forwarding()
+                try:
+                    full_health_check()
+                except Exception as e:
+                    print(f"[HealthCheck] 完整检查异常: {e}")
 
             # 每分钟输出一次健康状态
             if check_count % 6 == 0:
                 status = get_global_spoof_status()
-                print(f"[HealthCheck] 状态: ARP欺骗={status['enabled']}, 线程存活={status.get('thread_alive')}, 心跳={status.get('heartbeat_age')}s")
+                ipv6_status = get_ipv6_spoof_status()
+                print(f"[HealthCheck] ARP欺骗={status['enabled']}, 线程={status.get('thread_alive')}, 心跳={status.get('heartbeat_age')}s | IPv6欺骗={ipv6_status['enabled']}, 线程={ipv6_status.get('thread_alive')}")
 
             time.sleep(10)
         except Exception as e:
@@ -720,6 +752,11 @@ def main():
     # 自动开启全局流量监控（默认开启）
     print("[Init] 自动开启全局流量监控...")
     start_global_spoof()
+    try:
+        start_ipv6_spoof()
+        print("[Startup] IPv6 NDP欺骗已启动")
+    except Exception as e:
+        print(f"[Startup] IPv6欺骗启动失败: {e}")
 
     # 启动健康检查线程（自动修复机制）
     print("[Init] 启动健康检查线程（自动修复）...")
