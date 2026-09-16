@@ -978,3 +978,1776 @@
                 </div>
             </div>
         </div>
+
+        <!-- 设备列表 -->
+        <div id="tab-devices" style="display:none;">
+            <div class="card">
+                <div class="card-title">
+                    <span>📱 所有设备</span>
+                    <div>
+                        <input type="text" id="searchInput" placeholder="搜索设备..." style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;" oninput="filterDevices()">
+                        <div class="custom-select" id="filterSelect" style="margin-left:8px;">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('filterSelect')" style="padding:8px 28px 8px 12px;font-size:13px;">全部</div>
+                            <div class="custom-select-options">
+                                <div class="custom-select-option selected" onclick="selectCustomOption('filterSelect','all','全部')">全部</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('filterSelect','online','在线')">在线</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('filterSelect','offline','离线')">离线</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="device-table">
+                        <thead>
+                            <tr>
+                                <th>状态</th>
+                                <th>设备名称</th>
+                                <th>IP地址</th>
+                                <th>MAC地址</th>
+                                <th>厂商</th>
+                                <th>↑ 上传速率</th>
+                                <th>↓ 下载速率</th>
+                                <th>总流量</th>
+                                <th>管理状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deviceTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 流量排行 -->
+        <div id="tab-ranking" style="display:none;">
+            <div class="card">
+                <div class="card-title">
+                    <span>🏆 设备流量排行榜</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div class="tab-sub" style="margin:0;">
+                            <button class="tab-sub-btn active" onclick="switchRankingPeriod(this,1)">今天</button>
+                            <button class="tab-sub-btn" onclick="switchRankingPeriod(this,7)">本周</button>
+                            <button class="tab-sub-btn" onclick="switchRankingPeriod(this,30)">本月</button>
+                        </div>
+                        <div class="custom-select" id="rankingSort">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('rankingSort')">总流量</div>
+                            <div class="custom-select-options">
+                                <div class="custom-select-option selected" onclick="selectCustomOption('rankingSort','total','总流量')">总流量</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('rankingSort','download','下载')">下载</div>
+                                <div class="custom-select-option" onclick="selectCustomOption('rankingSort','upload','上传')">上传</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="rankingList"></div>
+            </div>
+        </div>
+
+        <!-- 浏览记录 -->
+        <div id="tab-browsing" style="display:none;">
+            <div class="card">
+                <div class="card-title">
+                    <span>🌐 设备浏览记录</span>
+                    <span style="font-size:12px;color:#888;" id="browsingInfo"></span>
+                    <button class="tab-sub-btn" style="margin-left:auto;" onclick="loadBrowsingHistory()">🔄 刷新</button>
+                </div>
+                <div id="browsingContent">
+                    <p style="color:#888;text-align:center;padding:40px;">加载中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdGuard Home -->
+        <div id="tab-adguard" style="display:none;">
+            <div class="card" style="border-left:3px solid #68b84a;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                    <div>
+                        <h2 style="font-size:18px;color:#68b84a;">🛡️ AdGuard Home 广告过滤</h2>
+                        <p style="font-size:12px;color:#888;margin-top:4px;">DNS 级广告拦截 · 全屋设备自动过滤</p>
+                    </div>
+                    <a href="http://192.168.1.10:3000/" target="_blank" style="text-decoration:none;">
+                        <button class="btn btn-primary" style="background:linear-gradient(135deg,#68b84a,#4a9a30);">🔗 打开 AdGuard Home 完整界面</button>
+                    </a>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="adguardStatsGrid" style="grid-template-columns:repeat(4,1fr);">
+                <div class="stat-card"><div class="stat-icon">🔍</div><div class="stat-label">DNS 查询</div><div class="stat-value" style="color:#68b84a;font-size:24px;" id="agDnsQueries">-</div><div class="stat-sub">最近24小时</div></div>
+                <div class="stat-card"><div class="stat-icon">🚫</div><div class="stat-label">已被过滤器拦截</div><div class="stat-value" style="color:#e74c3c;font-size:24px;" id="agBlocked">-</div><div class="stat-sub" id="agBlockRate">拦截率 -</div></div>
+                <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-label">恶意/钓鱼网站</div><div class="stat-value" style="color:#f39c12;font-size:24px;" id="agMalware">-</div><div class="stat-sub">安全浏览拦截</div></div>
+                <div class="stat-card"><div class="stat-icon">🔞</div><div class="stat-label">成人网站</div><div class="stat-value" style="color:#9b59b6;font-size:24px;" id="agAdult">-</div><div class="stat-sub">家长控制拦截</div></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+                <div class="card">
+                    <div class="card-title"><span>📊 概况统计</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
+                    <div id="adguardOverview">
+                        <div style="text-align:center;padding:30px;color:#888;">加载中...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>👥 客户端排行</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
+                    <div id="adguardClients" style="max-height:300px;overflow-y:auto;padding-right:15px;">
+                        <div style="text-align:center;padding:30px;color:#888;">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div class="card">
+                    <div class="card-title"><span>🌐 请求域名排行</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
+                    <div id="adguardTopDomains" style="max-height:350px;overflow-y:auto;padding-right:15px;">
+                        <div style="text-align:center;padding:30px;color:#888;">加载中...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span>🚫 被拦截域名排行</span><span style="font-size:11px;color:#888;">最近24小时</span></div>
+                    <div id="adguardBlockedDomains" style="max-height:350px;overflow-y:auto;padding-right:15px;">
+                        <div style="text-align:center;padding:30px;color:#888;">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 连接记录 -->
+        <div id="tab-events" style="display:none;">
+            <div class="card">
+                <div class="card-title">
+                    <span>📋 连接事件记录</span>
+                    <span style="font-size:12px;color:#888;" id="eventCount"></span>
+                </div>
+                <div class="event-list" id="eventList"></div>
+            </div>
+        </div>
+
+        <!-- 关于 -->
+        <div id="tab-about" style="display:none;">
+            <div class="card">
+                <div class="card-title"><span>ℹ️ 关于 NetPulse</span></div>
+                <div style="line-height:2;">
+                    <p><strong>NetPulse 网脉</strong> - 轻量级网络设备管理系统</p>
+                    <p>📌 功能特性：</p>
+                    <ul style="margin-left:20px;">
+                        <li>✅ 自动发现局域网所有设备（ARP扫描 + Ping扫描）</li>
+                        <li>✅ 实时监控每台设备的上下行速率</li>
+                        <li>✅ 精确统计每台设备的流量使用（iptables内核级计数）</li>
+                        <li>✅ 按小时/天/周/月查看历史流量数据</li>
+                        <li>✅ 记录设备连接/断开事件</li>
+                        <li>✅ 设备命名与备注管理</li>
+                        <li>✅ MAC地址厂商自动识别</li>
+                        <li>✅ 🚫 设备封禁（踢出网络，ARP欺骗+iptables DROP）</li>
+                        <li>✅ ⏱️ 设备限速（tc HTB流量控制，可设上下行带宽）</li>
+                        <li>✅ 设备管理状态实时显示</li>
+                        <li>✅ 📊 周期流量统计（每月/每季度/每年/自定义，手动清零）</li>
+                    </ul>
+                    <p style="margin-top:15px;">🔧 技术栈：Python Flask + SQLite + iptables + tc + ARP欺骗 + Chart.js</p>
+                    <p>💾 数据存储：本地SQLite数据库，数据保留90天</p>
+                    <p style="margin-top:10px;color:#ff9800;">⚠️ 注意：设备封禁和限速功能通过ARP欺骗实现，需要设备与Orange Pi在同一局域网。封禁/限速可能对部分有ARP防护的设备无效。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备详情弹窗 -->
+    <div class="modal" id="deviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalDeviceName">设备详情</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- 限速设置弹窗 -->
+    <div class="modal" id="limitModal">
+        <div class="modal-content" style="max-width:450px;">
+            <div class="modal-header">
+                <h2>⏱️ 设备限速设置</h2>
+                <button class="modal-close" onclick="closeLimitModal()">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <p style="margin-bottom:15px;color:#aaa;font-size:13px;">设置设备的上下行带宽限制（单位：kbps，1Mbps=1024kbps）</p>
+                <div style="margin-bottom:15px;">
+                    <label style="display:block;margin-bottom:8px;font-size:13px;">⬆️ 上传限速 (kbps)</label>
+                    <input type="number" id="limitUpload" value="1024" min="64" max="100000"
+                           style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
+                    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=512">512k</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=1024">1M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=2048">2M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=5120">5M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitUpload').value=10240">10M</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;margin-bottom:8px;font-size:13px;">⬇️ 下载限速 (kbps)</label>
+                    <input type="number" id="limitDownload" value="2048" min="64" max="100000"
+                           style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;">
+                    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=1024">1M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=2048">2M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=5120">5M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=10240">10M</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('limitDownload').value=20480">20M</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button class="btn" onclick="closeLimitModal()">取消</button>
+                    <button class="btn btn-primary" onclick="applyLimit()">✅ 应用限速</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- 优先级设置弹窗 -->
+    <div id="priorityModal" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+                        <div class="modal-header">
+                            <h3>⚡ 设置网络优先级</h3>
+                            <button class="modal-close" onclick="closePriorityModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="priorityMac">
+                            <input type="hidden" id="priorityIp">
+                            <p style="margin-bottom:15px;color:#aaa;font-size:13px;">
+                                优先级高的设备在网络拥塞时会优先获得带宽，不会被其他设备挤下去。<br>
+                                未设置时所有设备优先级相同。
+                            </p>
+                            <div style="display:flex;flex-direction:column;gap:10px;">
+                                <button class="btn" style="background:linear-gradient(135deg,#ff5722,#e64a19);color:white;padding:12px;" onclick="setPriority('high')">
+                                    🔴 高优先级 - 保证50%带宽，优先传输
+                                </button>
+                                <button class="btn" style="background:linear-gradient(135deg,#4caf50,#388e3c);color:white;padding:12px;" onclick="setPriority('medium')">
+                                    🟢 普通优先级 - 保证30%带宽（默认）
+                                </button>
+                                <button class="btn" style="background:linear-gradient(135deg,#607d8b,#455a64);color:white;padding:12px;" onclick="setPriority('low')">
+                                    🔵 低优先级 - 保证20%带宽，后台传输
+                                </button>
+                            </div>
+                            <div id="currentPriority" style="margin-top:15px;text-align:center;color:#888;font-size:13px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+    <!-- 确认弹窗 -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h2 id="confirmTitle">确认操作</h2>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <p id="confirmMessage" style="margin-bottom:20px;line-height:1.6;"></p>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button class="btn" onclick="closeConfirmModal()">取消</button>
+                    <button class="btn btn-danger" id="confirmOkBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 周期流量统计弹窗 -->
+    <div id="periodModal" class="period-modal" style="display:none;">
+        <div class="period-modal-content">
+            <div class="period-modal-header">
+                <h3>📊 流量周期统计</h3>
+                <span class="period-modal-close" onclick="closePeriodModal()">&times;</span>
+            </div>
+            <div class="period-modal-body">
+                <!-- 当前周期统计 -->
+                <div class="period-current">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <div class="period-current-title" id="currentPeriodLabel" style="margin:0;">本月流量统计</div>
+                        <select id="quickPeriodSelect" onchange="quickSetPeriod(this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;outline:none;color-scheme:dark;">
+                            <option value="monthly" style="background:#1a1a2e;color:#fff;">每月</option>
+                            <option value="quarterly" style="background:#1a1a2e;color:#fff;">每季度</option>
+                            <option value="yearly" style="background:#1a1a2e;color:#fff;">每年</option>
+                            <option value="custom" style="background:#1a1a2e;color:#fff;">自定义</option>
+                        </select>
+                    </div>
+                    <div class="period-current-stats">
+                        <div class="period-stat-item">
+                            <div class="period-stat-label">上传</div>
+                            <div class="period-stat-value" style="color:#ff9800;" id="currentUpload">0 B</div>
+                        </div>
+                        <div class="period-stat-item">
+                            <div class="period-stat-label">下载</div>
+                            <div class="period-stat-value" style="color:#2196f3;" id="currentDownload">0 B</div>
+                        </div>
+                        <div class="period-stat-item">
+                            <div class="period-stat-label">总计</div>
+                            <div class="period-stat-value" style="color:#9c27b0;" id="currentTotal">0 B</div>
+                        </div>
+                    </div>
+                    <div class="period-current-time" id="currentPeriodTime">开始时间：-</div>
+                </div>
+
+                <!-- 周期设置 -->
+                <div class="period-settings">
+                    <div class="period-settings-title">统计周期设置</div>
+                    <div class="period-options">
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="monthly" checked onchange="onPeriodTypeChange()">
+                            <span>每月</span>
+                        </label>
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="quarterly" onchange="onPeriodTypeChange()">
+                            <span>每季度</span>
+                        </label>
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="yearly" onchange="onPeriodTypeChange()">
+                            <span>每年</span>
+                        </label>
+                        <label class="period-option">
+                            <input type="radio" name="periodType" value="custom" onchange="onPeriodTypeChange()">
+                            <span>自定义</span>
+                        </label>
+                    </div>
+                    <div class="period-custom-input" id="customDaysInput" style="display:none;">
+                        <span>每</span>
+                        <input type="number" id="customDays" value="30" min="1" max="365" style="width:60px;">
+                        <span>天清零一次</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 12px;background:#16213e;border-radius:6px;">
+                        <div>
+                            <div style="font-size:13px;color:#ccc;">周期结束自动清零</div>
+                            <div style="font-size:11px;color:#666;margin-top:2px;">开启后每月/每季度/每年结束时自动清零并保存到历史</div>
+                        </div>
+                        <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;" onclick="toggleAutoReset()">
+                            <input type="checkbox" id="autoResetToggle" checked style="opacity:0;width:0;height:0;">
+                            <span id="autoResetSlider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#4caf50;transition:.3s;border-radius:24px;"></span>
+                            <span id="autoResetKnob" style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;transition:.3s;border-radius:50%;"></span>
+                        </label>
+                    </div>
+                    <div class="period-actions">
+                        <button class="period-btn period-btn-primary" onclick="savePeriodSettings()">保存设置</button>
+                        <button class="period-btn period-btn-danger" onclick="resetPeriod()">立即清零</button>
+                    </div>
+                </div>
+
+                <!-- 历史周期 -->
+                <div class="period-history">
+                    <div class="period-history-title">历史周期统计</div>
+                    <div class="period-history-list" id="periodHistoryList">
+                        <div style="text-align:center;color:#888;padding:20px;">暂无历史数据</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测速历史记录弹窗 -->
+    <div id="speedtestHistoryModal" class="modal" style="display:none;z-index:10000;">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header">
+                <h2>📊 测速历史记录</h2>
+                <button class="modal-close" onclick="closeSpeedtestHistory()">&times;</button>
+            </div>
+            <div style="margin-bottom:15px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;color:#888;">最近20条记录</span>
+                <button class="btn btn-danger btn-sm" onclick="clearSpeedtestHistory()">🗑️ 清空记录</button>
+            </div>
+            <div id="speedtestHistoryList" style="max-height:500px;overflow-y:auto;">
+                <div style="text-align:center;padding:40px;color:#666;">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allDevices = [];
+        let trafficChart = null;
+        let trafficHistory = [];
+        let currentTab = 'dashboard';
+
+        // ============================================================
+        // 自定义下拉选择框组件
+        // ============================================================
+        function toggleCustomSelect(id) {
+            const select = document.getElementById(id);
+            const wasOpen = select.classList.contains('open');
+            document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+            if (!wasOpen) {
+                select.classList.add('open');
+            }
+        }
+
+        function selectCustomOption(id, value, text) {
+            const select = document.getElementById(id);
+            select.querySelector('.custom-select-trigger').textContent = text;
+            select.querySelectorAll('.custom-select-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            const options = select.querySelectorAll('.custom-select-option');
+            options.forEach(opt => {
+                if (opt.getAttribute('onclick').indexOf("'" + value + "'") !== -1) {
+                    opt.classList.add('selected');
+                }
+            });
+            select.classList.remove('open');
+            select.dataset.value = value;
+            if (id === 'rankingSort') loadRanking();
+            if (id === 'filterSelect') filterDevices();
+        }
+
+        function getCustomSelectValue(id) {
+            const select = document.getElementById(id);
+            return select.dataset.value || 'total';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-select')) {
+                document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+            }
+        });
+
+        // 格式化
+        function formatBytes(bytes) {
+            if (!bytes || bytes < 0) return '0 B';
+            if (bytes < 1024) return bytes.toFixed(0) + ' B';
+            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+            if (bytes < 1024*1024*1024) return (bytes/(1024*1024)).toFixed(1) + ' MB';
+            return (bytes/(1024*1024*1024)).toFixed(2) + ' GB';
+        }
+        function formatRate(kbps) {
+            if (!kbps || kbps < 0) return '0 KB/s';
+            if (kbps < 1024) return kbps.toFixed(1) + ' KB/s';
+            return (kbps/1024).toFixed(2) + ' MB/s';
+        }
+
+        // WiFi频段标签（可点击切换）
+        function getBandBadge(band, mac) {
+            const styles = {
+                '2.4g': 'background:rgba(255,152,0,0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.3);',
+                '5g': 'background:rgba(33,150,243,0.15);color:#2196f3;border:1px solid rgba(33,150,243,0.3);',
+                'wired': 'background:rgba(76,175,80,0.15);color:#4caf50;border:1px solid rgba(76,175,80,0.3);',
+                'unknown': 'background:rgba(150,150,150,0.15);color:#999;border:1px solid rgba(150,150,150,0.3);'
+            };
+            const names = {'2.4g': '2.4G', '5g': '5G', 'wired': '有线', 'unknown': '未知'};
+            const style = styles[band] || styles['unknown'];
+            const name = names[band] || '未知';
+            const clickHandler = mac ? `onclick="event.stopPropagation();cycleBand('${mac}','${band}')" style="cursor:pointer;"` : '';
+            return `<span ${clickHandler} title="点击切换频段" style="font-size:9px;padding:1px 5px;border-radius:3px;${style}">${name}</span>`;
+        }
+
+        // 循环切换频段
+        async function cycleBand(mac, currentBand) {
+            const bands = ['unknown', '2.4g', '5g', 'wired'];
+            const currentIndex = bands.indexOf(currentBand);
+            const nextBand = bands[(currentIndex + 1) % bands.length];
+            await setDeviceBand(mac, nextBand);
+        }
+
+        // 设置设备频段
+        async function setDeviceBand(mac, band) {
+            try {
+                const res = await fetch(`/api/device/${mac}/band`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({band})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadDevices();
+                } else {
+                    alert(data.error || '设置失败');
+                }
+            } catch(e) {
+                alert('设置失败: ' + e.message);
+            }
+        }
+
+        // 频段选择（自定义下拉组件）
+        function selectBandOption(mac, band, text) {
+            const selectId = 'bandSelect_' + mac.replace(/:/g,'');
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.querySelector('.custom-select-trigger').textContent = text;
+                select.querySelectorAll('.custom-select-option').forEach(opt => opt.classList.remove('selected'));
+                const options = select.querySelectorAll('.custom-select-option');
+                options.forEach(opt => {
+                    if (opt.getAttribute('onclick').indexOf("'" + band + "'") !== -1) {
+                        opt.classList.add('selected');
+                    }
+                });
+                select.classList.remove('open');
+            }
+            setDeviceBand(mac, band);
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            currentTab = tab;
+            const tabs = ['dashboard','devices','ranking','browsing','adguard','events','about'];
+            document.querySelectorAll('.nav-tab').forEach((t, i) => {
+                t.classList.toggle('active', tabs[i] === tab);
+            });
+            tabs.forEach(t => {
+                document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+            });
+            if (tab === 'events') loadEvents();
+            if (tab === 'ranking') loadRanking();
+            if (tab === 'browsing') loadBrowsingHistory();
+            if (tab === 'adguard') loadAdguardStats();
+        }
+
+        // 加载概览
+        async function loadSummary() {
+            try {
+                const res = await fetch('/api/summary');
+                const data = await res.json();
+
+                // 计算管理设备统计
+                const blockedCount = allDevices ? allDevices.filter(d => d.is_blocked === 1).length : 0;
+                const limitedCount = allDevices ? allDevices.filter(d => d.upload_limit > 0 || d.download_limit > 0).length : 0;
+                const managedCount = blockedCount + limitedCount;
+
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card" onclick="switchTab('devices')" style="cursor:pointer;">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-label">在线设备</div>
+                        <div class="stat-value" style="color:#4caf50;">${data.online_devices}</div>
+                        <div class="stat-sub">共 ${data.total_devices} 台设备</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⬆️</div>
+                        <div class="stat-label">当前上传速率</div>
+                        <div class="stat-value" style="color:#ff9800;font-size:22px;">${data.formatted.avg_upload_rate}</div>
+                        <div class="stat-sub">累计上传 ${data.formatted.total_upload}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⬇️</div>
+                        <div class="stat-label">当前下载速率</div>
+                        <div class="stat-value" style="color:#2196f3;font-size:22px;">${data.formatted.avg_download_rate}</div>
+                        <div class="stat-sub">累计下载 ${data.formatted.total_download}</div>
+                    </div>
+                    <div class="stat-card" onclick="openPeriodModal()" style="cursor:pointer;border-left:3px solid #9c27b0;">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-label">总流量<span style="font-size:10px;color:#888;margin-left:5px;">点击设置周期</span></div>
+                        <div class="stat-value" style="color:#9c27b0;font-size:22px;" id="periodTotalValue">${formatBytes(data.total_upload + data.total_download)}</div>
+                        <div class="stat-sub" id="periodLabel">上传 + 下载</div>
+                    </div>
+                    <div class="stat-card" style="border-left:3px solid #f44336;">
+                        <div class="stat-icon">🚫</div>
+                        <div class="stat-label">已封禁设备</div>
+                        <div class="stat-value" style="color:#f44336;">${blockedCount}</div>
+                        <div class="stat-sub">已限速 ${limitedCount} 台</div>
+                    </div>
+                    <div class="stat-card" style="border-left:3px solid #ff9800;">
+                        <div class="stat-icon">⚙️</div>
+                        <div class="stat-label">管理中设备</div>
+                        <div class="stat-value" style="color:#ff9800;">${managedCount}</div>
+                        <div class="stat-sub">封禁 + 限速</div>
+                    </div>
+                `;
+            } catch(e) { console.error(e); }
+        }
+
+        // 加载设备列表
+        async function loadDevices() {
+            try {
+                const res = await fetch('/api/devices');
+                allDevices = await res.json();
+                renderDeviceTable();
+                renderTopDevices();
+            } catch(e) { console.error(e); }
+        }
+
+        function renderDeviceTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filter = getCustomSelectValue('filterSelect');
+            const tbody = document.getElementById('deviceTableBody');
+
+            let filtered = allDevices.filter(d => {
+                if (filter === 'online' && !d.is_online) return false;
+                if (filter === 'offline' && d.is_online) return false;
+                if (search) {
+                    return (d.name || '').toLowerCase().includes(search) ||
+                           (d.ip || '').includes(search) ||
+                           (d.mac || '').toLowerCase().includes(search) ||
+                           (d.vendor || '').toLowerCase().includes(search);
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">📭</div>没有找到设备</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(d => {
+                const isBlocked = d.is_blocked === 1;
+                const isLimited = (d.upload_limit > 0 || d.download_limit > 0);
+                let statusBadges = '';
+                if (isBlocked) statusBadges += '<span class="badge badge-danger">🚫 已封禁</span>';
+                if (isLimited) statusBadges += `<span class="badge badge-warning">⏱️ ${d.upload_limit || d.download_limit}k</span>`;
+                // 显示优先级
+                const priorityLabel = {high: '🔴 高优先级', medium: '🟢 普通', low: '🔵 低优先级'};
+                const priorityColor = {high: '#ff5722', medium: '#4caf50', low: '#607d8b'};
+                const p = d.priority || 'medium';
+                statusBadges += `<span style="color:${priorityColor[p]};font-size:11px;font-weight:bold;">${priorityLabel[p]}</span>`;
+                if (!statusBadges) statusBadges = '<span style="color:#666;font-size:11px;">正常</span>';
+
+                const totalRate = (d.current_upload_rate || 0) + (d.current_download_rate || 0);
+                const maxRate = Math.max(...allDevices.map(x => (x.current_upload_rate || 0) + (x.current_download_rate || 0)), 1);
+                const ratePercent = Math.min((totalRate / maxRate * 100), 100).toFixed(1);
+
+                return `
+                <tr style="${isBlocked ? 'opacity:0.6;' : ''}" class="device-row">
+                    <td><span class="online-dot ${d.is_online ? 'online' : 'offline'}"></span>${d.is_online ? '在线' : '离线'}</td>
+                    <td>
+                        <div class="device-name" onclick="showDeviceDetail('${d.mac}')">${d.name || d.vendor || '未知设备'}</div>
+                        <div style="font-size:10px;color:#666;margin-top:2px;display:flex;align-items:center;gap:6px;">
+                            <span>${d.vendor || '未知厂商'}</span>
+                            ${getBandBadge(d.wifi_band, d.mac)}
+                        </div>
+                    </td>
+                    <td><span style="font-family:monospace;font-size:12px;">${d.ip || '-'}</span></td>
+                    <td><span class="device-mac">${d.mac}</span></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="font-size:11px;">${d.vendor || '未知'}</span>
+                        </div>
+                    </td>
+                    <td class="rate-up">${d.is_online ? d.upload_rate_str : '-'}</td>
+                    <td class="rate-down">${d.is_online ? d.download_rate_str : '-'}</td>
+                    <td>
+                        <div>${formatBytes(d.total_upload + d.total_download)}</div>
+                        <div style="background:rgba(255,255,255,0.1);height:4px;border-radius:2px;margin-top:4px;overflow:hidden;min-width:60px;">
+                            <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${ratePercent}%;border-radius:2px;"></div>
+                        </div>
+                    </td>
+                    <td>${statusBadges}</td>
+                    <td>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            ${isBlocked
+                                ? `<button class="btn btn-success btn-sm" onclick="unblockDevice('${d.mac}')">解封</button>`
+                                : `<button class="btn btn-danger btn-sm" onclick="blockDevice('${d.mac}')">封禁</button>`
+                            }
+                            ${isLimited
+                                ? `<button class="btn btn-info btn-sm" onclick="unlimitDevice('${d.mac}')">取消</button>`
+                                : `<button class="btn btn-warning btn-sm" onclick="showLimitModal('${d.mac}')">限速</button>`
+                            }
+                            <button class="btn btn-sm" style="background:linear-gradient(135deg,#9c27b0,#7b1fa2);color:white;" onclick="showPriorityModal('${d.mac}','${d.ip}','${d.priority || 'medium'}')">优先级</button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function renderTopDevices() {
+            const top = [...allDevices].filter(d => d.is_online)
+                .sort((a, b) => {
+                    const rateA = a.current_upload_rate + a.current_download_rate;
+                    const rateB = b.current_upload_rate + b.current_download_rate;
+                    if (rateA !== rateB) return rateB - rateA;
+                    return (b.total_upload + b.total_download) - (a.total_upload + a.total_download);
+                })
+                .slice(0, 10);
+
+            const container = document.getElementById('topDevices');
+            if (top.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无在线设备</div>';
+                return;
+            }
+
+            const maxRate = Math.max(...top.map(d => d.current_upload_rate + d.current_download_rate), 1);
+            const maxTraffic = Math.max(...top.map(d => d.total_upload + d.total_download), 1);
+            container.innerHTML = top.map((d, i) => {
+                const total = d.current_upload_rate + d.current_download_rate;
+                const percent = (total / maxRate * 100).toFixed(1);
+                const trafficPercent = ((d.total_upload + d.total_download) / maxTraffic * 100).toFixed(1);
+                const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
+                const rankColor = i < 3 ? rankColors[i] : '#666';
+                return `
+                    <div style="display:flex;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.2s;" onclick="showDeviceDetail('${d.mac}')" onmouseover="this.style.background='rgba(102,126,234,0.05)'" onmouseout="this.style.background='transparent'">
+                        <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:${i<3?'rgba(255,152,0,0.15)':'rgba(255,255,255,0.05)'};font-weight:700;color:${rankColor};font-size:16px;margin-right:12px;">${i+1}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name || d.vendor || '未知设备'} <span style="color:#666;font-size:11px;font-weight:400;">${d.ip}</span></div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                                <div style="flex:1;background:rgba(255,255,255,0.08);height:5px;border-radius:3px;overflow:hidden;">
+                                    <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${percent}%;border-radius:3px;transition:width 0.5s;"></div>
+                                </div>
+                                <span style="font-size:10px;color:#888;min-width:60px;text-align:right;">总流量 ${formatBytes(d.total_upload + d.total_download)}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right;margin-left:15px;min-width:80px;">
+                            <div class="rate-up" style="font-size:12px;">↑ ${formatRate(d.current_upload_rate)}</div>
+                            <div class="rate-down" style="font-size:12px;">↓ ${formatRate(d.current_download_rate)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterDevices() {
+            renderDeviceTable();
+        }
+
+        // 设备详情
+        async function showDeviceDetail(mac) {
+            try {
+                const res = await fetch('/api/device/' + mac);
+                const data = await res.json();
+                const d = data.device;
+
+                document.getElementById('modalDeviceName').innerHTML = `
+                    ${d.name || d.vendor || '未知设备'}
+                    <button class="btn" style="margin-left:10px;font-size:11px;padding:4px 10px;" onclick="renameDevice('${d.mac}')">✏️ 重命名</button>
+                    ${d.is_blocked === 1
+                        ? `<button class="btn btn-success" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="unblockDevice('${d.mac}')">✅ 解除封禁</button>`
+                        : `<button class="btn btn-danger" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="blockDevice('${d.mac}')">🚫 封禁</button>`
+                    }
+                    ${(d.upload_limit > 0 || d.download_limit > 0)
+                        ? `<button class="btn btn-info" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="unlimitDevice('${d.mac}')">↩️ 取消限速</button>`
+                        : `<button class="btn btn-warning" style="margin-left:5px;font-size:11px;padding:4px 10px;" onclick="showLimitModal('${d.mac}')">⏱️ 限速</button>`
+                    }
+                `;
+
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-label">状态</div><div class="info-value" style="color:${d.is_online?'#4caf50':'#666'}">${d.is_online?'● 在线':'○ 离线'}</div></div>
+                        <div class="info-item info-item-wide"><div class="info-label">IP地址</div><div class="info-value" style="font-family:monospace;font-size:13px;">${d.ip || '-'}</div></div>
+                        <div class="info-item info-item-wide"><div class="info-label">MAC地址</div><div class="info-value" style="font-family:monospace;font-size:13px;">${d.mac}</div></div>
+                        <div class="info-item"><div class="info-label">厂商</div><div class="info-value">${d.vendor || '未知'}</div></div>
+                        <div class="info-item">
+                            <div class="info-label">连接频段</div>
+                            <div class="info-value">
+                                <select onchange="setDeviceBand('${d.mac}', this.value)" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;outline:none;width:100%;color-scheme:dark;">
+                                    <option value="unknown" ${d.wifi_band=='unknown'?'selected':''} style="background:#1a1a2e;color:#fff;">未知</option>
+                                    <option value="2.4g" ${d.wifi_band=='2.4g'?'selected':''} style="background:#1a1a2e;color:#fff;">2.4GHz WiFi</option>
+                                    <option value="5g" ${d.wifi_band=='5g'?'selected':''} style="background:#1a1a2e;color:#fff;">5GHz WiFi</option>
+                                    <option value="wired" ${d.wifi_band=='wired'?'selected':''} style="background:#1a1a2e;color:#fff;">有线连接</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-item"><div class="info-label">首次发现</div><div class="info-value" style="font-size:13px;">${d.first_seen_str || '-'}</div></div>
+                        <div class="info-item"><div class="info-label">最后在线</div><div class="info-value" style="font-size:13px;">${d.last_seen_str || '-'}</div></div>
+                        <div class="info-item"><div class="info-label">累计上传</div><div class="info-value" style="color:#ff9800;">${d.total_upload_str}</div></div>
+                        <div class="info-item"><div class="info-label">累计下载</div><div class="info-value" style="color:#2196f3;">${d.total_download_str}</div></div>
+                    </div>
+
+                    <div class="tab-sub">
+                        <button class="tab-sub-btn active" onclick="switchDetailTab(this,'24h')">24小时</button>
+                        <button class="tab-sub-btn" onclick="switchDetailTab(this,'7d')">7天</button>
+                        <button class="tab-sub-btn" onclick="switchDetailTab(this,'30d')">30天</button>
+                    </div>
+                    <div class="chart-container"><canvas id="detailChart"></canvas></div>
+
+                    <h3 style="margin:20px 0 10px;font-size:14px;">📋 最近连接事件</h3>
+                    <div class="event-list" style="max-height:250px;">
+                        ${data.events.length === 0 ? '<div class="empty-state">暂无事件</div>' :
+                        data.events.map(e => `
+                            <div class="event-item">
+                                <div>
+                                    <span class="event-type event-${e.event_type}">${e.event_type === 'first_seen' ? '首次发现' : e.event_type === 'disconnect' ? '离线' : '连接'}</span>
+                                    <span style="margin-left:10px;font-size:12px;color:#aaa;">${e.details || ''}</span>
+                                </div>
+                                <span style="font-size:11px;color:#666;">${e.time_str}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                document.getElementById('deviceModal').classList.add('active');
+                renderDetailChart(data.hourly_traffic, '24h');
+            } catch(e) { console.error(e); }
+        }
+
+        let detailChartInstance = null;
+        function renderDetailChart(data, period) {
+            const ctx = document.getElementById('detailChart');
+            if (!ctx) return;
+            if (detailChartInstance) detailChartInstance.destroy();
+
+            const labels = data.map(d => period === '24h' ? d.hour.split(' ')[1].split(':')[0] + ':00' : d.date);
+            const uploads = data.map(d => d.upload / (1024*1024));
+            const downloads = data.map(d => d.download / (1024*1024));
+
+            detailChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: '上传 (MB)', data: uploads, backgroundColor: 'rgba(255,152,0,0.6)', borderRadius: 4 },
+                        { label: '下载 (MB)', data: downloads, backgroundColor: 'rgba(33,150,243,0.6)', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#aaa' } } },
+                    scales: {
+                        x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        async function switchDetailTab(btn, period) {
+            document.querySelectorAll('.tab-sub-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const mac = document.getElementById('modalDeviceName').querySelector('button')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+            if (!mac) return;
+            const endpoint = period === '24h' ? 'hourly' : 'daily';
+            const days = period === '7d' ? 7 : period === '30d' ? 30 : 1;
+            try {
+                const res = await fetch(`/api/traffic/${endpoint}/${mac}?${endpoint==='hourly'?'hours=24':'days='+days}`);
+                const data = await res.json();
+                renderDetailChart(data, period);
+            } catch(e) { console.error(e); }
+        }
+
+        async function renameDevice(mac) {
+            const name = prompt('请输入设备名称：');
+            if (!name) return;
+            try {
+                await fetch(`/api/device/${mac}/rename`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                showDeviceDetail(mac);
+                loadDevices();
+            } catch(e) { console.error(e); }
+        }
+
+        function closeModal() {
+            document.getElementById('deviceModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // 设备管理功能
+        // ============================================================
+
+        let currentLimitMac = null;
+        let confirmCallback = null;
+
+        // 封禁设备
+        function blockDevice(mac) {
+            const device = allDevices.find(d => d.mac === mac);
+            if (!device) return;
+            showConfirm(
+                '🚫 确认封禁设备',
+                `确定要将设备「${device.name || device.vendor || '未知'}」(${device.ip})踢出网络吗？\n\n封禁后该设备将无法访问互联网，直到解除封禁。`,
+                async () => {
+                    try {
+                        const res = await fetch(`/api/device/${mac}/block`, { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            alert('✅ 设备已封禁');
+                            loadDevices();
+                        } else {
+                            alert('❌ ' + (data.error || '封禁失败'));
+                        }
+                    } catch(e) { alert('❌ 操作失败: ' + e.message); }
+                }
+            );
+        }
+
+        // 解除封禁
+        async function unblockDevice(mac) {
+            try {
+                const res = await fetch(`/api/device/${mac}/unblock`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ 设备已解除封禁');
+                    loadDevices();
+                } else {
+                    alert('❌ ' + (data.error || '操作失败'));
+                }
+            } catch(e) { alert('❌ 操作失败: ' + e.message); }
+        }
+
+        // 显示限速弹窗
+        
+        // ============================================================
+        // 网络优先级功能
+        // ============================================================
+        function showPriorityModal(mac, ip, current) {
+            document.getElementById('priorityMac').value = mac;
+            document.getElementById('priorityIp').value = ip;
+            const labels = {high: '当前：高优先级', medium: '当前：普通优先级', low: '当前：低优先级'};
+            const cur = current || 'medium';
+            document.getElementById('currentPriority').textContent = labels[cur] || '当前：普通优先级';
+            // 高亮当前选中的优先级按钮
+            document.querySelectorAll('#priorityModal .btn').forEach(btn => {
+                btn.style.opacity = '1';
+                btn.style.transform = 'scale(1)';
+            });
+            const btnMap = {high: 0, medium: 1, low: 2};
+            const btns = document.querySelectorAll('#priorityModal .modal-body > div > button');
+            if (btns[btnMap[cur]]) {
+                btns[btnMap[cur]].style.opacity = '0.7';
+                btns[btnMap[cur]].style.transform = 'scale(0.98)';
+            }
+            document.getElementById('priorityModal').classList.add('active');
+        }
+
+        function closePriorityModal() {
+            document.getElementById('priorityModal').classList.remove('active');
+        }
+
+        function setPriority(priority) {
+            const mac = document.getElementById('priorityMac').value;
+            const ip = document.getElementById('priorityIp').value;
+
+            fetch(`/api/device/${mac}/priority`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({priority: priority})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    closePriorityModal();
+                    showToast(`优先级已设置为：${priority === 'high' ? '高' : priority === 'low' ? '低' : '普通'}`);
+                    // 更新本地数据
+                    if (typeof allDevices !== 'undefined') {
+                        const dev = allDevices.find(d => d.mac === mac);
+                        if (dev) dev.priority = priority;
+                    }
+                    loadDevices();
+                } else {
+                    alert('设置失败：' + (data.error || '未知错误'));
+                }
+            })
+            .catch(e => alert('设置失败：' + e));
+        }
+
+        function showLimitModal(mac) {
+            currentLimitMac = mac;
+            const device = allDevices.find(d => d.mac === mac);
+            if (device && device.upload_limit > 0) {
+                document.getElementById('limitUpload').value = device.upload_limit;
+                document.getElementById('limitDownload').value = device.download_limit || device.upload_limit;
+            }
+            document.getElementById('limitModal').classList.add('active');
+        }
+
+        function closeLimitModal() {
+            document.getElementById('limitModal').classList.remove('active');
+            currentLimitMac = null;
+        }
+
+        // 应用限速
+        async function applyLimit() {
+            if (!currentLimitMac) return;
+            const upload = parseInt(document.getElementById('limitUpload').value);
+            const download = parseInt(document.getElementById('limitDownload').value);
+            if (!upload || !download || upload < 64 || download < 64) {
+                alert('⚠️ 限速值必须大于64kbps');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/device/${currentLimitMac}/limit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ upload_kbps: upload, download_kbps: download })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ 限速已应用\n上传: ${upload}kbps / 下载: ${download}kbps`);
+                    closeLimitModal();
+                    loadDevices();
+                } else {
+                    alert('❌ ' + (data.error || '限速失败'));
+                }
+            } catch(e) { alert('❌ 操作失败: ' + e.message); }
+        }
+
+        // 取消限速
+        async function unlimitDevice(mac) {
+            try {
+                const res = await fetch(`/api/device/${mac}/unlimit`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ 已取消限速');
+                    loadDevices();
+                } else {
+                    alert('❌ ' + (data.error || '操作失败'));
+                }
+            } catch(e) { alert('❌ 操作失败: ' + e.message); }
+        }
+
+        // 确认弹窗
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        }
+
+        // 确认按钮点击
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('confirmOkBtn');
+            if (btn) {
+                btn.onclick = () => {
+                    if (confirmCallback) confirmCallback();
+                    closeConfirmModal();
+                };
+            }
+            // 初始化时检查全局欺骗状态
+            checkGlobalSpoofStatus();
+        });
+
+        // ============================================================
+        // 全局流量监控模式（全局ARP欺骗）
+        // ============================================================
+
+        let globalSpoofEnabled = false;
+
+        async function checkGlobalSpoofStatus() {
+            try {
+                const res = await fetch('/api/global-spoof/status');
+                const data = await res.json();
+                globalSpoofEnabled = data.enabled;
+                updateGlobalSpoofUI();
+            } catch(e) { console.error(e); }
+        }
+
+        function updateGlobalSpoofUI() {
+            const btn = document.getElementById('globalSpoofBtn');
+            const status = document.getElementById('globalSpoofStatus');
+            const tip = document.getElementById('gatewayTip');
+
+            if (globalSpoofEnabled) {
+                btn.innerHTML = '⏹️ 关闭全局流量监控';
+                btn.style.background = 'linear-gradient(135deg,#f44336,#c62828)';
+                status.innerHTML = '<span style="color:#4caf50;">● 运行中 - 所有设备流量正在经过 Orange Pi</span>';
+                if (tip) {
+                    tip.style.borderLeftColor = '#4caf50';
+                }
+            } else {
+                btn.innerHTML = '🚀 开启全局流量监控模式';
+                btn.style.background = 'linear-gradient(135deg,#4caf50,#2e7d32)';
+                status.textContent = '未开启';
+                if (tip) {
+                    tip.style.borderLeftColor = '#ff9800';
+                }
+            }
+        }
+
+        async function toggleGlobalSpoof() {
+            const btn = document.getElementById('globalSpoofBtn');
+            btn.disabled = true;
+            btn.textContent = globalSpoofEnabled ? '正在关闭...' : '正在开启...';
+
+            try {
+                const url = globalSpoofEnabled ? '/api/global-spoof/disable' : '/api/global-spoof/enable';
+                const res = await fetch(url, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    globalSpoofEnabled = data.status.enabled;
+                    updateGlobalSpoofUI();
+                    alert(globalSpoofEnabled
+                        ? '✅ 全局流量监控模式已开启！\n\n所有设备流量将自动经过 Orange Pi，几秒钟后流量统计将开始显示实时数据。\n\n注意：Orange Pi 必须保持运行，关闭后设备网络会自动恢复。'
+                        : '✅ 全局流量监控模式已关闭！\n\n所有设备的网络已恢复正常（直接连接路由器）。');
+                } else {
+                    alert('❌ 操作失败: ' + (data.error || '未知错误'));
+                }
+            } catch(e) {
+                alert('❌ 操作失败: ' + e.message);
+            }
+
+            btn.disabled = false;
+            updateGlobalSpoofUI();
+        }
+
+        // 流量排行
+        let rankingDays = 7;
+        async function loadRanking() {
+            try {
+                const sort = getCustomSelectValue('rankingSort');
+                const res = await fetch(`/api/traffic-ranking?days=${rankingDays}&sort=${sort}`);
+                const data = await res.json();
+                const ranking = data.ranking;
+                
+                const container = document.getElementById('rankingList');
+                if (ranking.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div>暂无流量数据</div>';
+                    return;
+                }
+
+                const maxTraffic = Math.max(...ranking.map(d => d.total_upload + d.total_download), 1);
+                const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
+
+                container.innerHTML = ranking.map((d, i) => {
+                    const total = d.total_upload + d.total_download;
+                    const percent = (total / maxTraffic * 100).toFixed(1);
+                    const rankColor = i < 3 ? rankColors[i] : '#666';
+                    const rankBg = i < 3 ? 'rgba(255,152,0,0.1)' : 'rgba(255,255,255,0.03)';
+                    return `
+                    <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.2s;" 
+                         onclick="showDeviceDetail('${d.mac}')" 
+                         onmouseover="this.style.background='rgba(102,126,234,0.05)'" 
+                         onmouseout="this.style.background='transparent'">
+                        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:${rankBg};font-weight:700;color:${rankColor};font-size:18px;margin-right:14px;flex-shrink:0;">${i+1}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                <span style="font-weight:600;font-size:14px;">${d.name || d.vendor || '未知设备'}</span>
+                                <span style="font-size:11px;color:#888;font-family:monospace;">${d.ip || '-'}</span>
+                                ${d.is_online ? '<span style="font-size:10px;color:#4caf50;">●在线</span>' : '<span style="font-size:10px;color:#666;">○离线</span>'}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="flex:1;background:rgba(255,255,255,0.08);height:8px;border-radius:4px;overflow:hidden;">
+                                    <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${percent}%;border-radius:4px;transition:width 0.5s;"></div>
+                                </div>
+                                <span style="font-size:12px;color:#aaa;min-width:80px;text-align:right;">总 ${d.total_str}</span>
+                            </div>
+                            <div style="display:flex;gap:16px;margin-top:4px;font-size:11px;">
+                                <span style="color:#ff9800;">↑ ${d.total_upload_str}</span>
+                                <span style="color:#2196f3;">↓ ${d.total_download_str}</span>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            } catch(e) {
+                console.error('加载流量排行失败:', e);
+                document.getElementById('rankingList').innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function switchRankingPeriod(btn, days) {
+            document.querySelectorAll('#tab-ranking .tab-sub-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            rankingDays = days;
+            loadRanking();
+        }
+
+        // 加载事件
+        async function loadEvents() {
+            try {
+                const res = await fetch('/api/events?limit=200');
+                const events = await res.json();
+                document.getElementById('eventCount').textContent = `共 ${events.length} 条`;
+                document.getElementById('eventList').innerHTML = events.length === 0 ?
+                    '<div class="empty-state"><div class="empty-state-icon">📋</div>暂无连接事件</div>' :
+                    events.map(e => `
+                        <div class="event-item">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span class="event-type event-${e.event_type}">${e.event_type === 'first_seen' ? '🆕 首次发现' : e.event_type === 'disconnect' ? '📴 离线' : '🔗 连接'}</span>
+                                <span style="font-size:13px;">${e.device_ip || ''}</span>
+                                <span style="font-size:11px;color:#666;font-family:monospace;">${e.device_mac}</span>
+                            </div>
+                            <span style="font-size:11px;color:#666;">${e.time_str}</span>
+                        </div>
+                    `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        // 立即扫描
+        async function scanNow() {
+            const btn = event.target;
+            btn.textContent = '扫描中...';
+            btn.disabled = true;
+            try {
+                await fetch('/api/scan', { method: 'POST' });
+                await loadDevices();
+                await loadSummary();
+            } catch(e) { console.error(e); }
+            btn.textContent = '🔄 立即扫描';
+            btn.disabled = false;
+        }
+
+        // 流量趋势图
+        function initTrafficChart() {
+            const ctx = document.getElementById('trafficChart');
+            trafficChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '上传 (KB/s)',
+                            data: [],
+                            borderColor: '#ff9800',
+                            backgroundColor: 'rgba(255,152,0,0.15)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            borderWidth: 2
+                        },
+                        {
+                            label: '下载 (KB/s)',
+                            data: [],
+                            borderColor: '#2196f3',
+                            backgroundColor: 'rgba(33,150,243,0.15)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 5,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { labels: { color: '#aaa', usePointStyle: true, padding: 15 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#ddd',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' KB/s';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888', maxTicksLimit: 8, font: { size: 11 } },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#888',
+                                font: { size: 11 },
+                                callback: function(value) {
+                                    if (value >= 1024) return (value/1024).toFixed(1) + ' MB/s';
+                                    return value.toFixed(0) + ' KB/s';
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            beginAtZero: true,
+                            suggestedMax: 100
+                        }
+                    },
+                    animation: { duration: 300 }
+                }
+            });
+        }
+
+        function updateTrafficChart() {
+            const online = allDevices.filter(d => d.is_online);
+            const totalUp = online.reduce((s, d) => s + (d.current_upload_rate || 0), 0);
+            const totalDown = online.reduce((s, d) => s + (d.current_download_rate || 0), 0);
+            const now = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            trafficHistory.push({ time: now, up: totalUp, down: totalDown });
+            if (trafficHistory.length > 60) trafficHistory.shift();
+
+            trafficChart.data.labels = trafficHistory.map(d => d.time);
+            trafficChart.data.datasets[0].data = trafficHistory.map(d => d.up);
+            trafficChart.data.datasets[1].data = trafficHistory.map(d => d.down);
+            trafficChart.update('none');
+        }
+
+        // 时间更新
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN');
+        }
+
+        // ============================================================
+        // 周期流量统计功能
+        // ============================================================
+
+        function openPeriodModal() {
+            document.getElementById('periodModal').style.display = 'flex';
+            loadPeriodData();
+        }
+
+        function closePeriodModal() {
+            document.getElementById('periodModal').style.display = 'none';
+        }
+
+        function onPeriodTypeChange() {
+            const type = document.querySelector('input[name="periodType"]:checked').value;
+            document.getElementById('customDaysInput').style.display = type === 'custom' ? 'flex' : 'none';
+        }
+
+        // 自动清零开关
+        function toggleAutoReset() {
+            const toggle = document.getElementById('autoResetToggle');
+            const slider = document.getElementById('autoResetSlider');
+            const knob = document.getElementById('autoResetKnob');
+            toggle.checked = !toggle.checked;
+            if (toggle.checked) {
+                slider.style.background = '#4caf50';
+                knob.style.transform = 'translateX(20px)';
+            } else {
+                slider.style.background = '#555';
+                knob.style.transform = 'translateX(0)';
+            }
+        }
+
+        function setAutoResetUI(enabled) {
+            const toggle = document.getElementById('autoResetToggle');
+            const slider = document.getElementById('autoResetSlider');
+            const knob = document.getElementById('autoResetKnob');
+            toggle.checked = enabled;
+            if (enabled) {
+                slider.style.background = '#4caf50';
+                knob.style.transform = 'translateX(20px)';
+            } else {
+                slider.style.background = '#555';
+                knob.style.transform = 'translateX(0)';
+            }
+        }
+
+        async function loadPeriodData() {
+            try {
+                const res = await fetch('/api/period-summary');
+                const data = await res.json();
+
+                // 更新当前周期
+                document.getElementById('currentPeriodLabel').textContent = data.current.period_label + ' 流量统计';
+                document.getElementById('currentUpload').textContent = data.current.total_upload_str;
+                document.getElementById('currentDownload').textContent = data.current.total_download_str;
+                document.getElementById('currentTotal').textContent = data.current.total_str;
+                document.getElementById('currentPeriodTime').textContent = '开始时间：' + data.current.start_time_str;
+
+                // 更新设置
+                const type = data.settings.period_type;
+                document.querySelector(`input[name="periodType"][value="${type}"]`).checked = true;
+                document.getElementById('customDaysInput').style.display = type === 'custom' ? 'flex' : 'none';
+                document.getElementById('customDays').value = data.settings.custom_days;
+                document.getElementById('quickPeriodSelect').value = type;
+                setAutoResetUI(data.settings.auto_reset !== false);
+
+                // 更新历史
+                const historyList = document.getElementById('periodHistoryList');
+                if (data.history && data.history.length > 0) {
+                    historyList.innerHTML = data.history.map(p => `
+                        <div class="period-history-item ${p.is_current ? 'current' : ''}">
+                            <div>
+                                <div class="period-history-label">${p.period_label} ${p.is_current ? '(当前)' : ''}</div>
+                                <div class="period-history-time">${p.start_time_str || '-'} ${p.end_time_str ? '~ ' + p.end_time_str : '至今'}</div>
+                            </div>
+                            <div class="period-history-traffic">${p.total_str || '0 B'}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    historyList.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">暂无历史数据</div>';
+                }
+
+                // 更新仪表盘上的总流量显示
+                document.getElementById('periodTotalValue').textContent = data.current.total_str;
+                document.getElementById('periodLabel').textContent = data.current.period_label + ' · 上传 + 下载';
+            } catch(e) {
+                console.error('加载周期数据失败:', e);
+            }
+        }
+
+        async function quickSetPeriod(type) {
+            const customDays = parseInt(document.getElementById('customDays').value) || 30;
+            const autoReset = document.getElementById('autoResetToggle').checked;
+            try {
+                const res = await fetch('/api/period-settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({period_type: type, custom_days: customDays, auto_reset: autoReset})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadPeriodData();
+                }
+            } catch(e) {
+                console.error('切换周期失败:', e);
+            }
+        }
+
+        async function savePeriodSettings() {
+            const type = document.querySelector('input[name="periodType"]:checked').value;
+            const customDays = parseInt(document.getElementById('customDays').value) || 30;
+            const autoReset = document.getElementById('autoResetToggle').checked;
+
+            try {
+                const res = await fetch('/api/period-settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({period_type: type, custom_days: customDays, auto_reset: autoReset})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('周期设置已保存（流量数据保留，如需清零请点击"立即清零"）');
+                    loadPeriodData();
+                }
+            } catch(e) {
+                console.error('保存周期设置失败:', e);
+                alert('保存失败');
+            }
+        }
+
+        async function resetPeriod() {
+            if (!confirm('确定要立即清零当前周期的流量统计吗？')) return;
+            try {
+                const res = await fetch('/api/period-reset', {method: 'POST'});
+                const data = await res.json();
+                if (data.success) {
+                    alert('流量已清零，当前周期数据已保存到历史');
+                    loadPeriodData();
+                }
+            } catch(e) {
+                console.error('清零失败:', e);
+                alert('清零失败');
+            }
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('periodModal').addEventListener('click', function(e) {
+            if (e.target === this) closePeriodModal();
+        });
+
+        // 浏览记录筛选状态
+        let browsingFilter = 'all'; // all / blocked / normal
+
+        // 加载浏览记录
+        async function loadBrowsingHistory() {
+            const content = document.getElementById('browsingContent');
+            content.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">加载中...</p>';
+            try {
+                const res = await fetch('/api/browsing-history?limit=5000');
+                const data = await res.json();
+                if (data.error) {
+                    content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">' + data.error + '</p>';
+                    return;
+                }
+                document.getElementById('browsingInfo').textContent = '共 ' + data.total_devices + ' 台设备 | ' + (data.total_queries || 0) + ' 条查询';
+                if (!data.devices || data.devices.length === 0) {
+                    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌐</div>暂无浏览记录</div>';
+                    return;
+                }
+
+                // 筛选按钮
+                const filterBar = '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+                    '<button class="tab-sub-btn ' + (browsingFilter==='all'?'active':'') + '" onclick="setBrowsingFilter(\'all\')">全部域名</button>' +
+                    '<button class="tab-sub-btn ' + (browsingFilter==='normal'?'active':'') + '" onclick="setBrowsingFilter(\'normal\')">正常访问</button>' +
+                    '<button class="tab-sub-btn ' + (browsingFilter==='blocked'?'active':'') + '" onclick="setBrowsingFilter(\'blocked\')">被拦截</button>' +
+                    '</div>';
+
+                content.innerHTML = filterBar + data.devices.map(function(dev, idx) {
+                    var blockRate = dev.total_queries > 0 ? ((dev.blocked_count / dev.total_queries) * 100).toFixed(1) : 0;
+                    // 匹配设备名称
+                    var devInfo = allDevices.find(function(d) { return d.ip === dev.ip; });
+                    var devName = devInfo ? (devInfo.name || devInfo.vendor || '未知设备') : '未知设备';
+
+                    // 筛选域名
+                    var domains = (dev.top_domains || []).filter(function(d) {
+                        if (browsingFilter === 'blocked') return d.blocked > 0;
+                        if (browsingFilter === 'normal') return d.blocked === 0;
+                        return true;
+                    }).slice(0, 50);
+
+                    var domainList = domains.map(function(d) {
+                        var isBlocked = d.blocked > 0;
+                        var domainStyle = isBlocked ? 'color:#e74c3c;text-decoration:line-through;' : 'color:#64b5f6;';
+                        var ipList = (d.ips || []).length > 0 ? '<span style="color:#666;font-size:10px;margin-left:8px;">→ ' + d.ips.slice(0,2).join(', ') + '</span>' : '';
+                        var typeList = (d.types || []).length > 0 ? '<span style="color:#888;font-size:10px;margin-left:6px;">[' + d.types.join('/') + ']</span>' : '';
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;">' +
+                            '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">' +
+                            '<a href="http://' + d.domain + '" target="_blank" style="' + domainStyle + 'text-decoration:none;font-family:monospace;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">' + d.domain + '</a>' +
+                            typeList + ipList +
+                            '</div>' +
+                            '<div style="text-align:right;min-width:80px;">' +
+                            '<span style="color:#aaa;font-size:12px;">' + d.count + '次</span>' +
+                            (isBlocked ? '<span style="color:#e74c3c;font-size:11px;margin-left:6px;">🚫' + d.blocked + '</span>' : '') +
+                            '</div></div>';
+                    }).join('');
+
+                    // 最近访问记录
+                    var recentList = (dev.recent || []).slice(0, 20).map(function(r) {
+                        var timeStr = r.time ? r.time.replace('T', ' ').substring(0, 19) : '';
+                        var rStyle = r.blocked ? 'color:#e74c3c;text-decoration:line-through;' : 'color:#64b5f6;';
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 12px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:12px;">' +
+                            '<a href="http://' + r.domain + '" target="_blank" style="' + rStyle + 'text-decoration:none;font-family:monospace;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + r.domain + '</a>' +
+                            '<span style="color:#666;font-size:10px;">' + timeStr + '</span></div>';
+                    }).join('');
+
+                    return '<div style="margin-bottom:16px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;">' +
+                        '<div style="background:rgba(102,126,234,0.1);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="toggleBrowsingDetail(' + idx + ')">' +
+                        '<span style="font-size:18px;">📱</span>' +
+                        '<div style="flex:1;"><div style="font-weight:600;">' + devName + ' <span style="color:#888;font-size:12px;font-weight:400;">' + dev.ip + '</span></div>' +
+                        '<div style="font-size:11px;color:#888;">查询 ' + dev.total_queries + ' 次 | 拦截 ' + dev.blocked_count + ' 次 (' + blockRate + '%) | 访问域名 ' + (dev.top_domains || []).length + ' 个</div></div>' +
+                        '<span id="browse-arrow-' + idx + '" style="color:#888;font-size:12px;">点击展开 ▼</span></div>' +
+                        '<div id="browse-' + idx + '" style="display:none;background:rgba(0,0,0,0.15);">' +
+                        '<div style="padding:8px 12px;background:rgba(255,255,255,0.03);font-size:12px;color:#aaa;font-weight:600;">📊 访问域名排行（点击域名可跳转）</div>' +
+                        '<div style="max-height:300px;overflow-y:auto;">' + (domainList || '<p style="padding:20px;text-align:center;color:#666;">暂无域名记录</p>') + '</div>' +
+                        '<div style="padding:8px 12px;background:rgba(255,255,255,0.03);font-size:12px;color:#aaa;font-weight:600;margin-top:8px;">🕐 最近访问记录</div>' +
+                        '<div style="max-height:200px;overflow-y:auto;">' + (recentList || '<p style="padding:20px;text-align:center;color:#666;">暂无记录</p>') + '</div>' +
+                        '</div></div>';
+                }).join('');
+            } catch(e) {
+                content.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:40px;">加载失败: ' + e.message + '</p>';
+                console.error('加载浏览记录失败:', e);
+            }
+        }
+
+        function setBrowsingFilter(filter) {
+            browsingFilter = filter;
+            loadBrowsingHistory();
+        }
+
+        function toggleBrowsingDetail(idx) {
+            var el = document.getElementById('browse-' + idx);
+            var arrow = document.getElementById('browse-arrow-' + idx);
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                arrow.textContent = '点击收起 ▲';
+            } else {
+                el.style.display = 'none';
+                arrow.textContent = '点击展开 ▼';
+            }
+        }
+
+        // AdGuard Home 统计
+        async function loadAdguardStats() {
+            try {
+                const res = await fetch('/api/adguard-stats');
+                const data = await res.json();
+                if (data.error) {
+                    document.getElementById('adguardOverview').innerHTML = '<div style="text-align:center;padding:30px;color:#e74c3c;">' + data.error + '</div>';
+                    return;
+                }
+
+                // 统计卡片
+                document.getElementById('agDnsQueries').textContent = data.num_dns_queries.toLocaleString();
+                document.getElementById('agBlocked').textContent = data.num_blocked_filtering.toLocaleString();
+                document.getElementById('agBlockRate').textContent = '拦截率 ' + data.block_rate + '%';
+                document.getElementById('agMalware').textContent = data.num_replaced_safebrowsing.toLocaleString();
+                document.getElementById('agAdult').textContent = data.num_replaced_parental.toLocaleString();
+
+                // 概况统计
+                const overviewHtml = `
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="color:#aaa;">DNS 查询</span><span style="color:#68b84a;font-weight:600;">${data.num_dns_queries.toLocaleString()}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="color:#aaa;">已被过滤器拦截</span><span style="color:#e74c3c;font-weight:600;">${data.num_blocked_filtering.toLocaleString()}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="color:#aaa;">被拦截的恶意/钓鱼网站</span><span style="color:#f39c12;font-weight:600;">${data.num_replaced_safebrowsing.toLocaleString()}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="color:#aaa;">被拦截的成人网站</span><span style="color:#9b59b6;font-weight:600;">${data.num_replaced_parental.toLocaleString()}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="color:#aaa;">强制安全搜索</span><span style="color:#3498db;font-weight:600;">${data.num_replaced_safesearch.toLocaleString()}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;">
+                        <span style="color:#aaa;">平均处理时间</span><span style="color:#2ecc71;font-weight:600;">${(data.avg_processing_time * 1000).toFixed(1)} ms</span></div>`;
+                document.getElementById('adguardOverview').innerHTML = overviewHtml;
+
+                // 客户端排行
+                const totalQueries = data.num_dns_queries || 1;
+                const clientsHtml = data.top_clients.length === 0 ?
+                    '<div style="text-align:center;padding:30px;color:#888;">暂无数据</div>' :
+                    data.top_clients.map((c, i) => {
+                        const percent = ((c.count / totalQueries) * 100).toFixed(1);
+                        const devInfo = allDevices.find(d => d.ip === c.client);
+                        const devName = devInfo ? (devInfo.name || devInfo.vendor || c.client) : c.client;
+                        return `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                <span style="font-size:13px;font-family:monospace;">${devName} <span style="color:#666;font-size:11px;">${c.client}</span></span>
+                                <span style="font-size:12px;color:#aaa;">${c.count.toLocaleString()} <span style="color:#68b84a;">${percent}%</span></span></div>
+                            <div style="background:rgba(255,255,255,0.08);height:4px;border-radius:2px;overflow:hidden;">
+                                <div style="background:linear-gradient(90deg,#68b84a,#4a9a30);height:100%;width:${Math.min(percent,100)}%;border-radius:2px;"></div></div></div>`;
+                    }).join('');
+                document.getElementById('adguardClients').innerHTML = clientsHtml;
+
+                // 请求域名排行
+                const domainsHtml = data.top_queried_domains.length === 0 ?
+                    '<div style="text-align:center;padding:30px;color:#888;">暂无数据</div>' :
+                    data.top_queried_domains.map((d, i) => {
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <a href="http://${d.domain}" target="_blank" style="color:#64b5f6;text-decoration:none;font-family:monospace;font-size:12px;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.domain}</a>
+                            <span style="font-size:12px;color:#aaa;">${d.count.toLocaleString()}</span></div>`;
+                    }).join('');
+                document.getElementById('adguardTopDomains').innerHTML = domainsHtml;
+
+                // 被拦截域名排行
+                const blockedHtml = data.top_blocked_domains.length === 0 ?
+                    '<div style="text-align:center;padding:30px;color:#888;">暂无数据</div>' :
+                    data.top_blocked_domains.map((d, i) => {
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <span style="color:#e74c3c;text-decoration:line-through;font-family:monospace;font-size:12px;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.domain}</span>
+                            <span style="font-size:12px;color:#e74c3c;">🚫 ${d.count.toLocaleString()}</span></div>`;
+                    }).join('');
+                document.getElementById('adguardBlockedDomains').innerHTML = blockedHtml;
+
+            } catch(e) {
+                document.getElementById('adguardOverview').innerHTML = '<div style="text-align:center;padding:30px;color:#e74c3c;">加载失败: ' + e.message + '</div>';
+                console.error('加载AdGuard统计失败:', e);
+            }
+        }
+
+        // 初始化
+
+        
+        
+        // ========== 通用卡片折叠/展开 ==========
+        function toggleCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.classList.toggle('collapsed');
+            }
+        }
+
+        // ========== 网络测速折叠/展开 ==========
+        function toggleSpeedtest() {
+            const card = document.getElementById('speedtestCard');
+            card.classList.toggle('collapsed');
+        }
+
+        // ========== 网络测速功能 ==========
+        let speedtestRunning = false;
+
+        function setGaugeValue(needleId, valueId, value, max=100) {
+            const needle = document.getElementById(needleId);
+            const valueEl = document.getElementById(valueId);
+            // 线性刻度，指针和数字严格对应
+            const percent = Math.min(value / max, 1);
+            const angle = -90 + (percent * 180);
+            needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+            valueEl.textContent = value.toFixed(2);
+        }
+
+        async function startSpeedtest() {
+            if (speedtestRunning) return;
+            speedtestRunning = true;
+            const btn = document.getElementById('startSpeedtestBtn');
+            const status = document.getElementById('speedtestStatus');
+            btn.disabled = true;
+            btn.textContent = '测速中...';
+
+            // 重置仪表
+            setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', 0, 100);
+            setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', 0, 100);
+            document.getElementById('speedtestPing').style.display = 'none';
+
+            try {
+                status.textContent = '🔄 正在连接测速服务器...';
+                await new Promise(r => setTimeout(r, 500));
+
+                status.textContent = '⬇️ 正在测试下载速度...';
+                // 模拟动画效果
+                for (let i = 0; i < 5; i++) {
+                    setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', Math.random() * 50);
+                    await new Promise(r => setTimeout(r, 300));
+                }
+
+                status.textContent = '⬆️ 正在测试上传速度...';
+                // 上传测试动画
+                for (let i = 0; i < 4; i++) {
+                    setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', Math.random() * 30, 100);
+                    await new Promise(r => setTimeout(r, 300));
+                }
+
+                const res = await fetch('/api/speedtest/start', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', data.download);
+                    setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', data.upload);
+                    document.getElementById('pingValue').textContent = data.ping;
+                    document.getElementById('serverValue').textContent = data.server || '-';
+                    document.getElementById('speedtestPing').style.display = 'block';
+                    status.innerHTML = '<span style="color:#4caf50;">✅ 测速完成！</span>';
+                } else {
+                    status.innerHTML = '<span style="color:#f44336;">❌ 测速失败：' + (data.error || '未知错误') + '</span>';
+                }
+            } catch(e) {
+                status.innerHTML = '<span style="color:#f44336;">❌ 测速失败：' + e.message + '</span>';
+            }
+
+            btn.disabled = false;
+            btn.textContent = '▶ 开始测速';
+            speedtestRunning = false;
+            // 5秒后指针归0
+            setTimeout(function() {
+                setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', 0, 100);
+                setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', 0, 100);
+            }, 5000);
+        }
+
+        function showSpeedtestHistory() {
+            document.getElementById('speedtestHistoryModal').style.display = 'flex';
+            loadSpeedtestHistory();
+        }
+
+        function closeSpeedtestHistory() {
+            document.getElementById('speedtestHistoryModal').style.display = 'none';
+        }
+
+        async function loadSpeedtestHistory() {
+            try {
+                const res = await fetch('/api/speedtest/history');
+                const data = await res.json();
+                const list = document.getElementById('speedtestHistoryList');
+                if (!data.success || !data.history || data.history.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">暂无测速记录</div>';
+                    return;
+                }
+                list.innerHTML = data.history.map((item, i) => {
+                    const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
+                    const rankColor = i < 3 ? rankColors[i] : '#666';
+                    return `<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:rgba(255,255,255,0.05);font-weight:700;color:${rankColor};font-size:14px;margin-right:12px;">${i+1}</div>
+                        <div style="flex:1;">
+                            <div style="font-size:12px;color:#888;margin-bottom:4px;">${item.timestamp}</div>
+                            <div style="display:flex;gap:15px;font-size:12px;flex-wrap:wrap;">
+                                <span style="color:#2196f3;">⬇️ ${item.download_speed.toFixed(2)} Mbps <span style="color:#888;">(${(item.download_speed/8).toFixed(2)} MB/s)</span></span>
+                                <span style="color:#ff9800;">⬆️ ${item.upload_speed.toFixed(2)} Mbps <span style="color:#888;">(${(item.upload_speed/8).toFixed(2)} MB/s)</span></span>
+                                <span style="color:#4caf50;">📶 ${item.ping.toFixed(1)} ms</span>
+                            </div>
+                            ${item.server ? '<div style="font-size:11px;color:#666;margin-top:2px;">' + item.server + '</div>' : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                document.getElementById('speedtestHistoryList').innerHTML = '<div style="text-align:center;padding:40px;color:#f44336;">加载失败</div>';
+            }
+        }
+
+        async function clearSpeedtestHistory() {
+            if (!confirm('确定要清空所有测速历史记录吗？')) return;
+            try {
+                await fetch('/api/speedtest/history', { method: 'DELETE' });
+                loadSpeedtestHistory();
+            } catch(e) { alert('清空失败'); }
+        }
+
+        async function init() {
+            initTrafficChart();
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            await loadSummary();
+            await loadDevices();
+
+            // 定时刷新
+            setInterval(async () => {
+                await loadSummary();
+                await loadDevices();
+                updateTrafficChart();
+            }, 5000);
+
+            setInterval(updateTrafficChart, 10000);
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('speedtestHistoryModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSpeedtestHistory();
+        });
+
+        document.getElementById('deviceModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        init();
+    </script>
+</body>
+</html>
