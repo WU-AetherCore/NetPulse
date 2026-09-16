@@ -2628,30 +2628,59 @@
             setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', 0, 100);
             document.getElementById('speedtestPing').style.display = 'none';
 
+            // 实时摆动动画
+            let animInterval = null;
+            let currentDownload = 0;
+            let currentUpload = 0;
+
+            const startGaugeAnimation = (phase) => {
+                if (animInterval) clearInterval(animInterval);
+                animInterval = setInterval(() => {
+                    if (phase === 'download') {
+                        currentDownload = Math.max(0, currentDownload + (Math.random() - 0.35) * 25);
+                        currentDownload = Math.min(currentDownload, 95);
+                        setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', currentDownload, 100);
+                    } else if (phase === 'upload') {
+                        currentUpload = Math.max(0, currentUpload + (Math.random() - 0.35) * 20);
+                        currentUpload = Math.min(currentUpload, 95);
+                        setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', currentUpload, 100);
+                    } else {
+                        // 双表盘同时摆动
+                        currentDownload = Math.max(0, currentDownload + (Math.random() - 0.35) * 25);
+                        currentDownload = Math.min(currentDownload, 95);
+                        currentUpload = Math.max(0, currentUpload + (Math.random() - 0.35) * 20);
+                        currentUpload = Math.min(currentUpload, 95);
+                        setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', currentDownload, 100);
+                        setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', currentUpload, 100);
+                    }
+                }, 150);
+            };
+
+            const stopGaugeAnimation = () => {
+                if (animInterval) {
+                    clearInterval(animInterval);
+                    animInterval = null;
+                }
+            };
+
             try {
                 status.textContent = '🔄 正在连接测速服务器...';
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 800));
 
                 status.textContent = '⬇️ 正在测试下载速度...';
-                // 模拟动画效果
-                for (let i = 0; i < 5; i++) {
-                    setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', Math.random() * 50);
-                    await new Promise(r => setTimeout(r, 300));
-                }
-
-                status.textContent = '⬆️ 正在测试上传速度...';
-                // 上传测试动画
-                for (let i = 0; i < 4; i++) {
-                    setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', Math.random() * 30, 100);
-                    await new Promise(r => setTimeout(r, 300));
-                }
+                startGaugeAnimation('both');
 
                 const res = await fetch('/api/speedtest/start', { method: 'POST' });
                 const data = await res.json();
 
+                stopGaugeAnimation();
+
                 if (data.success) {
+                    // 平滑过渡到真实值
                     setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', data.download);
+                    await new Promise(r => setTimeout(r, 600));
                     setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', data.upload);
+
                     document.getElementById('pingValue').textContent = data.ping;
                     document.getElementById('serverValue').textContent = data.server || '-';
                     document.getElementById('speedtestPing').style.display = 'block';
@@ -2660,6 +2689,7 @@
                     status.innerHTML = '<span style="color:#f44336;">❌ 测速失败：' + (data.error || '未知错误') + '</span>';
                 }
             } catch(e) {
+                stopGaugeAnimation();
                 status.innerHTML = '<span style="color:#f44336;">❌ 测速失败：' + e.message + '</span>';
             }
 
