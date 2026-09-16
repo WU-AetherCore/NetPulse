@@ -2628,38 +2628,33 @@
             setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', 0, 100);
             document.getElementById('speedtestPing').style.display = 'none';
 
-            // 实时摆动动画
-            let animInterval = null;
-            let currentDownload = 0;
-            let currentUpload = 0;
+            // 实时速率轮询（读取eth0真实接口速率）
+            let realtimeInterval = null;
+            let maxDownload = 0;
+            let maxUpload = 0;
 
-            const startGaugeAnimation = (phase) => {
-                if (animInterval) clearInterval(animInterval);
-                animInterval = setInterval(() => {
-                    if (phase === 'download') {
-                        currentDownload = Math.max(0, currentDownload + (Math.random() - 0.35) * 25);
-                        currentDownload = Math.min(currentDownload, 95);
-                        setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', currentDownload, 100);
-                    } else if (phase === 'upload') {
-                        currentUpload = Math.max(0, currentUpload + (Math.random() - 0.35) * 20);
-                        currentUpload = Math.min(currentUpload, 95);
-                        setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', currentUpload, 100);
-                    } else {
-                        // 双表盘同时摆动
-                        currentDownload = Math.max(0, currentDownload + (Math.random() - 0.35) * 25);
-                        currentDownload = Math.min(currentDownload, 95);
-                        currentUpload = Math.max(0, currentUpload + (Math.random() - 0.35) * 20);
-                        currentUpload = Math.min(currentUpload, 95);
-                        setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', currentDownload, 100);
-                        setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', currentUpload, 100);
-                    }
-                }, 150);
+            const startRealtimeMonitor = () => {
+                if (realtimeInterval) clearInterval(realtimeInterval);
+                realtimeInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch('/api/speedtest/realtime');
+                        const data = await res.json();
+                        if (data.running) {
+                            // 仪表盘最大值根据实际速度动态调整
+                            const maxVal = Math.max(100, Math.ceil(Math.max(data.download, data.upload) / 10) * 10);
+                            setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', Math.min(data.download, maxVal), maxVal);
+                            setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', Math.min(data.upload, maxVal), maxVal);
+                            if (data.download > maxDownload) maxDownload = data.download;
+                            if (data.upload > maxUpload) maxUpload = data.upload;
+                        }
+                    } catch(e) {}
+                }, 500);
             };
 
-            const stopGaugeAnimation = () => {
-                if (animInterval) {
-                    clearInterval(animInterval);
-                    animInterval = null;
+            const stopRealtimeMonitor = () => {
+                if (realtimeInterval) {
+                    clearInterval(realtimeInterval);
+                    realtimeInterval = null;
                 }
             };
 
@@ -2667,29 +2662,30 @@
                 status.textContent = '🔄 正在连接测速服务器...';
                 await new Promise(r => setTimeout(r, 800));
 
-                status.textContent = '⬇️ 正在测试下载速度...';
-                startGaugeAnimation('both');
+                status.textContent = '⬇️ 正在测试下载/上传速度（真实速率）...';
+                startRealtimeMonitor();
 
                 const res = await fetch('/api/speedtest/start', { method: 'POST' });
                 const data = await res.json();
 
-                stopGaugeAnimation();
+                stopRealtimeMonitor();
 
                 if (data.success) {
-                    // 平滑过渡到真实值
-                    setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', data.download);
+                    // 显示最终真实结果
+                    const maxVal = Math.max(100, Math.ceil(Math.max(data.download, data.upload) / 10) * 10);
+                    setGaugeValue('downloadGaugeNeedle', 'downloadGaugeValue', data.download, maxVal);
                     await new Promise(r => setTimeout(r, 600));
-                    setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', data.upload);
+                    setGaugeValue('uploadGaugeNeedle', 'uploadGaugeValue', data.upload, maxVal);
 
                     document.getElementById('pingValue').textContent = data.ping;
                     document.getElementById('serverValue').textContent = data.server || '-';
                     document.getElementById('speedtestPing').style.display = 'block';
-                    status.innerHTML = '<span style="color:#4caf50;">✅ 测速完成！</span>';
+                    status.innerHTML = '<span style="color:#4caf50;">✅ 测速完成！峰值 下载:' + maxDownload.toFixed(1) + ' 上传:' + maxUpload.toFixed(1) + ' Mbps</span>';
                 } else {
                     status.innerHTML = '<span style="color:#f44336;">❌ 测速失败：' + (data.error || '未知错误') + '</span>';
                 }
             } catch(e) {
-                stopGaugeAnimation();
+                stopRealtimeMonitor();
                 status.innerHTML = '<span style="color:#f44336;">❌ 测速失败：' + e.message + '</span>';
             }
 

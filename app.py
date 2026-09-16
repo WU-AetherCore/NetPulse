@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import json
+import threading
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
@@ -834,20 +835,110 @@ def api_qos_init():
 
 
 
+# 测速实时速率监控
+speedtest_realtime = {'upload': 0, 'download': 0, 'running': False, 'history': []}
+speedtest_monitor_thread = None
+
+
+def _monitor_interface_speed():
+    """监控eth0接口的实时速率（测速时使用）"""
+    import time
+    global speedtest_realtime
+    last_rx = 0
+    last_tx = 0
+    last_time = time.time()
+
+    # 读取初始值
+    try:
+        with open('/proc/net/dev', 'r') as f:
+            for line in f:
+                if 'eth0:' in line:
+                    parts = line.split()
+                    last_rx = int(parts[1])
+                    last_tx = int(parts[9])
+                    break
+    except Exception:
+        pass
+
+    speedtest_realtime['history'] = []
+
+    while speedtest_realtime['running']:
+        try:
+            time.sleep(1)
+            current_rx = 0
+            current_tx = 0
+            with open('/proc/net/dev', 'r') as f:
+                for line in f:
+                    if 'eth0:' in line:
+                        parts = line.split()
+                        current_rx = int(parts[1])
+                        current_tx = int(parts[9])
+                        break
+
+            now = time.time()
+            delta = now - last_time
+            if delta > 0:
+                # 转换为 Mbps
+                download_mbps = (current_rx - last_rx) * 8 / delta / 1024 / 1024
+                upload_mbps = (current_tx - last_tx) * 8 / delta / 1024 / 1024
+                speedtest_realtime['download'] = max(0, download_mbps)
+                speedtest_realtime['upload'] = max(0, upload_mbps)
+                speedtest_realtime['history'].append({
+                    'time': now,
+                    'download': max(0, download_mbps),
+                    'upload': max(0, upload_mbps)
+                })
+                # 只保留最近60条
+                if len(speedtest_realtime['history']) > 60:
+                    speedtest_realtime['history'].pop(0)
+
+            last_rx = current_rx
+            last_tx = current_tx
+            last_time = now
+        except Exception as e:
+            print(f"[Speedtest Monitor] 监控错误: {e}")
+            time.sleep(1)
+
+
 @app.route('/api/speedtest/start', methods=['POST'])
 def api_speedtest_start():
+    global speedtest_monitor_thread
     try:
         import speedtest
+
+        # 启动实时速率监控线程
+        speedtest_realtime['running'] = True
+        speedtest_realtime['upload'] = 0
+        speedtest_realtime['download'] = 0
+        speedtest_monitor_thread = threading.Thread(target=_monitor_interface_speed, daemon=True)
+        speedtest_monitor_thread.start()
+
         st = speedtest.Speedtest()
         st.get_best_server()
         dl = st.download() / 1024 / 1024
         ul = st.upload() / 1024 / 1024
         ping = st.results.ping
         srv = st.results.server.get('sponsor', '') + ' - ' + st.results.server.get('name', '')
+
+        # 停止监控
+        speedtest_realtime['running'] = False
+
         add_speedtest_result(dl, ul, ping, srv)
         return jsonify({'success': True, 'download': round(dl, 2), 'upload': round(ul, 2), 'ping': round(ping, 1), 'server': srv})
     except Exception as e:
+        speedtest_realtime['running'] = False
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/speedtest/realtime')
+def api_speedtest_realtime():
+    """获取测速时的实时接口速率"""
+    return jsonify({
+        'running': speedtest_realtime['running'],
+        'upload': round(speedtest_realtime['upload'], 2),
+        'download': round(speedtest_realtime['download'], 2),
+        'history': speedtest_realtime.get('history', [])[-30:]
+    })
 
 @app.route('/api/speedtest/history', methods=['GET'])
 def api_speedtest_history():
