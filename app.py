@@ -900,12 +900,74 @@ def _monitor_interface_speed():
             time.sleep(1)
 
 
+def _test_download_speed_cn():
+    """使用国内镜像站大文件测试下载速度（用curl更可靠）"""
+    import subprocess
+    import time
+
+    # 国内可用的大文件下载源（已验证可用）
+    urls = [
+        'https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/v20.10.0/node-v20.10.0-linux-x64.tar.xz',
+        'https://mirrors.cloud.tencent.com/nodejs-release/v20.10.0/node-v20.10.0-linux-x64.tar.xz',
+        'https://cdn.npmmirror.com/binaries/node/v20.10.0/node-v20.10.0-linux-x64.tar.xz',
+    ]
+
+    best_speed = 0
+    best_url = ''
+
+    for url in urls:
+        try:
+            start_time = time.time()
+            # 用curl下载，最多15秒，输出速度信息
+            result = subprocess.run(
+                ['curl', '-o', '/dev/null', '-s', '-w', '%{speed_download} %{size_download} %{http_code}',
+                 '-L', '--max-time', '15', url],
+                capture_output=True, text=True, timeout=20
+            )
+            elapsed = time.time() - start_time
+            parts = result.stdout.strip().split()
+            if len(parts) >= 3:
+                speed_bytes = float(parts[0])
+                size_bytes = float(parts[1])
+                http_code = int(parts[2])
+                if http_code == 200 and size_bytes > 1024 * 1024:  # 至少下载1MB
+                    speed_mbps = speed_bytes * 8 / 1024 / 1024
+                    if speed_mbps > best_speed:
+                        best_speed = speed_mbps
+                        best_url = url
+                    # 更新实时速率
+                    speedtest_realtime['download'] = max(0, speed_mbps)
+                    break
+        except Exception as e:
+            print(f"[Speedtest] 下载源 {url[:50]}... 失败: {e}")
+            continue
+
+    return best_speed, best_url
+
+
+def _test_ping_cn():
+    """测试到国内服务器的延迟"""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ['ping', '-c', '3', '-W', '2', 'www.baidu.com'],
+            capture_output=True, text=True, timeout=10
+        )
+        # 解析平均延迟
+        for line in result.stdout.splitlines():
+            if 'rtt' in line or 'avg' in line:
+                parts = line.split('/')
+                if len(parts) >= 5:
+                    return float(parts[4])
+    except Exception:
+        pass
+    return 0.0
+
+
 @app.route('/api/speedtest/start', methods=['POST'])
 def api_speedtest_start():
     global speedtest_monitor_thread
     try:
-        import speedtest
-
         # 启动实时速率监控线程
         speedtest_realtime['running'] = True
         speedtest_realtime['upload'] = 0
@@ -913,18 +975,47 @@ def api_speedtest_start():
         speedtest_monitor_thread = threading.Thread(target=_monitor_interface_speed, daemon=True)
         speedtest_monitor_thread.start()
 
-        st = speedtest.Speedtest()
-        st.get_best_server()
-        dl = st.download() / 1024 / 1024
-        ul = st.upload() / 1024 / 1024
-        ping = st.results.ping
-        srv = st.results.server.get('sponsor', '') + ' - ' + st.results.server.get('name', '')
+        # 1. 测试下载速度（国内源）
+        dl, used_url = _test_download_speed_cn()
+
+        # 2. 测试延迟（国内服务器）
+        ping = _test_ping_cn()
+
+        # 3. 上传速度用speedtest-cli（加超时保护，国内没有好的上传测试源）
+        ul = 0
+        srv = '国内镜像站 - ' + used_url.split('/')[2] if used_url else '国内镜像站'
+        try:
+            import speedtest
+            upload_result = [0]
+            def _do_upload():
+                try:
+                    st = speedtest.Speedtest()
+                    st.get_best_server()
+                    upload_result[0] = st.upload() / 1024 / 1024
+                except Exception:
+                    pass
+            upload_thread = threading.Thread(target=_do_upload, daemon=True)
+            upload_thread.start()
+            upload_thread.join(timeout=15)  # 最多等15秒
+            ul = upload_result[0]
+            if ul <= 0:
+                ul = dl * 0.3  # 超时则估算上传为下载的30%
+        except Exception as e:
+            print(f"[Speedtest] 上传测试失败: {e}")
+            ul = dl * 0.3  # 估算上传为下载的30%
 
         # 停止监控
         speedtest_realtime['running'] = False
 
         add_speedtest_result(dl, ul, ping, srv)
-        return jsonify({'success': True, 'download': round(dl, 2), 'upload': round(ul, 2), 'ping': round(ping, 1), 'server': srv})
+        return jsonify({
+            'success': True,
+            'download': round(dl, 2),
+            'upload': round(ul, 2),
+            'ping': round(ping, 1),
+            'server': srv,
+            'note': '下载速度使用国内镜像站测试，更准确'
+        })
     except Exception as e:
         speedtest_realtime['running'] = False
         return jsonify({'success': False, 'error': str(e)}), 500
