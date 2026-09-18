@@ -864,10 +864,14 @@ def _monitor_global_interface_speed():
 
     # 初始化：添加IPv4和IPv6总统计规则
     try:
-        # IPv4规则
+        # IPv4规则（两个网段都统计）
         subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '1', '-s', '192.168.1.0/24'],
                       capture_output=True, timeout=5)
         subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '2', '-d', '192.168.1.0/24'],
+                      capture_output=True, timeout=5)
+        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '3', '-s', '192.168.0.0/24'],
+                      capture_output=True, timeout=5)
+        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '4', '-d', '192.168.0.0/24'],
                       capture_output=True, timeout=5)
         # IPv6规则
         subprocess.run(['sudo', 'ip6tables', '-I', 'NETPULSE', '1', '-s', '2409:8a62:6927:9ac0::/64'],
@@ -883,7 +887,7 @@ def _monitor_global_interface_speed():
         upload_bytes = 0
         download_bytes = 0
 
-        # 读取IPv4
+        # 读取IPv4（统计两个网段：192.168.1.0/24 + 192.168.0.0/24）
         try:
             result = subprocess.run(
                 ['sudo', 'iptables', '-L', 'NETPULSE', '-n', '-v', '-x'],
@@ -897,9 +901,11 @@ def _monitor_global_interface_speed():
                     bytes_count = int(parts[1].replace(',', ''))
                     source = parts[6] if len(parts) > 6 else ''
                     dest = parts[7] if len(parts) > 7 else ''
-                    if source == '192.168.1.0/24' and dest == '0.0.0.0/0':
+                    # 上传：源是局域网网段之一
+                    if (source == '192.168.1.0/24' or source == '192.168.0.0/24') and dest == '0.0.0.0/0':
                         upload_bytes += bytes_count
-                    elif source == '0.0.0.0/0' and dest == '192.168.1.0/24':
+                    # 下载：目的是局域网网段之一
+                    elif source == '0.0.0.0/0' and (dest == '192.168.1.0/24' or dest == '192.168.0.0/24'):
                         download_bytes += bytes_count
                 except:
                     continue
