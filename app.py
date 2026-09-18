@@ -857,58 +857,112 @@ speedtest_monitor_thread = None
 
 
 def _monitor_global_interface_speed():
-    """常驻监控eth0接口的实时速率（用于全局总速率显示）"""
+    """常驻监控转发流量速率（IPv4+IPv6，只统计其他设备的）"""
     import time
+    import subprocess
     global global_interface_rates
-    last_rx = 0
-    last_tx = 0
+
+    # 初始化：添加IPv4和IPv6总统计规则
+    try:
+        # IPv4规则
+        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '1', '-s', '192.168.1.0/24'],
+                      capture_output=True, timeout=5)
+        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '2', '-d', '192.168.1.0/24'],
+                      capture_output=True, timeout=5)
+        # IPv6规则
+        subprocess.run(['sudo', 'ip6tables', '-I', 'NETPULSE', '1', '-s', '2409:8a62:6927:9ac0::/64'],
+                      capture_output=True, timeout=5)
+        subprocess.run(['sudo', 'ip6tables', '-I', 'NETPULSE', '2', '-d', '2409:8a62:6927:9ac0::/64'],
+                      capture_output=True, timeout=5)
+        print("[GlobalRate] 已添加IPv4+IPv6总流量统计规则")
+    except Exception as e:
+        print(f"[GlobalRate] 添加规则失败: {e}")
+
+    def read_counters():
+        """读取IPv4+IPv6总计数器"""
+        upload_bytes = 0
+        download_bytes = 0
+
+        # 读取IPv4
+        try:
+            result = subprocess.run(
+                ['sudo', 'iptables', '-L', 'NETPULSE', '-n', '-v', '-x'],
+                capture_output=True, text=True, timeout=5
+            )
+            for line in result.stdout.split('\n'):
+                parts = line.split()
+                if len(parts) < 8:
+                    continue
+                try:
+                    bytes_count = int(parts[1].replace(',', ''))
+                    source = parts[6] if len(parts) > 6 else ''
+                    dest = parts[7] if len(parts) > 7 else ''
+                    if source == '192.168.1.0/24' and dest == '0.0.0.0/0':
+                        upload_bytes += bytes_count
+                    elif source == '0.0.0.0/0' and dest == '192.168.1.0/24':
+                        download_bytes += bytes_count
+                except:
+                    continue
+        except:
+            pass
+
+        # 读取IPv6
+        try:
+            result = subprocess.run(
+                ['sudo', 'ip6tables', '-L', 'NETPULSE', '-n', '-v', '-x'],
+                capture_output=True, text=True, timeout=5
+            )
+            for line in result.stdout.split('\n'):
+                parts = line.split()
+                if len(parts) < 8:
+                    continue
+                try:
+                    bytes_count = int(parts[1].replace(',', ''))
+                    source = parts[6] if len(parts) > 6 else ''
+                    dest = parts[7] if len(parts) > 7 else ''
+                    if '2409:8a62:6927:9ac0::' in source and dest == '::/0':
+                        upload_bytes += bytes_count
+                    elif source == '::/0' and '2409:8a62:6927:9ac0::' in dest:
+                        download_bytes += bytes_count
+                except:
+                    continue
+        except:
+            pass
+
+        return upload_bytes, download_bytes
+
+    time.sleep(2)
+
+    last_upload, last_download = read_counters()
     last_time = time.time()
 
-    # 读取初始值
-    try:
-        with open('/proc/net/dev', 'r') as f:
-            for line in f:
-                if 'eth0:' in line:
-                    parts = line.split()
-                    last_rx = int(parts[1])
-                    last_tx = int(parts[9])
-                    break
-    except Exception:
-        pass
-
-    print("[GlobalRate] 全局接口速率监控线程已启动")
+    print("[GlobalRate] 转发流量监控线程已启动（IPv4+IPv6，只统计其他设备）")
 
     while True:
         try:
             time.sleep(3)
-            current_rx = 0
-            current_tx = 0
-            with open('/proc/net/dev', 'r') as f:
-                for line in f:
-                    if 'eth0:' in line:
-                        parts = line.split()
-                        current_rx = int(parts[1])
-                        current_tx = int(parts[9])
-                        break
+            current_upload, current_download = read_counters()
 
             now = time.time()
             delta = now - last_time
-            if delta > 0:
-                # 转换为 KB/s (1 KB = 1024 bytes)
-                download_kbps = max(0, (current_rx - last_rx) / delta / 1024)
-                upload_kbps = max(0, (current_tx - last_tx) / delta / 1024)
+            if delta > 0 and current_upload >= last_upload:
+                upload_kbps = max(0, (current_upload - last_upload) / delta / 1024)
+                download_kbps = max(0, (current_download - last_download) / delta / 1024)
                 global_interface_rates['upload_kbps'] = upload_kbps
                 global_interface_rates['download_kbps'] = download_kbps
-                global_interface_rates['upload_bytes'] = current_tx
-                global_interface_rates['download_bytes'] = current_rx
+                global_interface_rates['upload_bytes'] = current_upload
+                global_interface_rates['download_bytes'] = current_download
                 global_interface_rates['last_update'] = now
 
-            last_rx = current_rx
-            last_tx = current_tx
+            last_upload = current_upload
+            last_download = current_download
             last_time = now
         except Exception as e:
             print(f"[GlobalRate] 监控错误: {e}")
             time.sleep(3)
+
+
+
 
 
 def _monitor_interface_speed():

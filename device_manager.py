@@ -987,5 +987,37 @@ def full_health_check():
     # 5. 检查NAT规则
     results["nat"] = "正常" if ensure_nat_and_forwarding() else "异常"
 
+    # 6. 检查IPv4总流量统计规则
+    try:
+        result = subprocess.run(
+            ['sudo', 'iptables', '-L', 'NETPULSE', '-n'],
+            capture_output=True, text=True, timeout=5
+        )
+        ipv4_total_ok = '192.168.1.0/24' in result.stdout
+        if not ipv4_total_ok:
+            run_sudo("iptables -I NETPULSE 1 -s 192.168.1.0/24")
+            run_sudo("iptables -I NETPULSE 2 -d 192.168.1.0/24")
+            results["ipv4_stats_rules"] = "已修复"
+        else:
+            results["ipv4_stats_rules"] = "正常"
+    except Exception as e:
+        results["ipv4_stats_rules"] = f"错误: {e}"
+
+    # 7. 检查IPv6总流量统计规则
+    try:
+        result = subprocess.run(
+            ['sudo', 'ip6tables', '-L', 'NETPULSE', '-n'],
+            capture_output=True, text=True, timeout=5
+        )
+        ipv6_total_ok = '2409:8a62:6927:9ac0' in result.stdout
+        if not ipv6_total_ok:
+            run_sudo("ip6tables -I NETPULSE 1 -s 2409:8a62:6927:9ac0::/64")
+            run_sudo("ip6tables -I NETPULSE 2 -d 2409:8a62:6927:9ac0::/64")
+            results["ipv6_stats_rules"] = "已修复"
+        else:
+            results["ipv6_stats_rules"] = "正常"
+    except Exception as e:
+        results["ipv6_stats_rules"] = f"错误: {e}"
+
     print(f"[HealthCheck] 完整检查结果: {results}")
     return results
