@@ -785,12 +785,76 @@
         }
 
 @media (max-width: 768px) {
-            .container { padding: 15px; }
-            .header { padding: 12px 15px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .stat-value { font-size: 22px; }
-            .device-table { font-size: 12px; }
-            .device-table th, .device-table td { padding: 8px 6px; }
+            .container { padding: 12px; }
+            .header { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+            .header .logo h1 { font-size: 18px; }
+            .header .logo p { font-size: 11px; }
+            .header-right { gap: 6px; flex-wrap: wrap; }
+            .status-badge { font-size: 11px; padding: 4px 8px; }
+            #currentTime { font-size: 11px !important; }
+            .btn { padding: 6px 12px; font-size: 12px; }
+            .btn-primary { padding: 6px 12px; font-size: 12px; }
+            .nav-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 4px; padding: 8px 0; }
+            .nav-tabs::-webkit-scrollbar { display: none; }
+            .nav-tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-value { font-size: 20px; }
+            .stat-label { font-size: 12px; }
+            .stat-sub { font-size: 10px; }
+            .card { padding: 14px; margin-bottom: 12px; }
+            .card-title { font-size: 14px; }
+            .device-table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .device-table th, .device-table td { padding: 6px 4px; white-space: nowrap; }
+            .device-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .modal-content { margin: 10px; max-width: calc(100vw - 20px) !important; max-height: calc(100vh - 40px); overflow-y: auto; }
+            .modal { padding: 10px; }
+            .speedtest-body { padding: 12px; }
+            .gauge-container { transform: scale(0.85); transform-origin: top center; }
+            .collapsible-card { padding: 12px; }
+            .gateway-header { padding: 8px 0; }
+            .speedtest-header { padding: 10px 0; }
+            .chart-container { height: 200px !important; }
+            .ranking-item { padding: 8px 4px; }
+            .ranking-rank { font-size: 14px; min-width: 24px; }
+            .ranking-info { font-size: 12px; }
+            .ranking-traffic { font-size: 11px; }
+            .browsing-item { padding: 8px 4px; font-size: 11px; }
+            .event-item { padding: 8px 4px; font-size: 11px; }
+            .adguard-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+            .adguard-card { padding: 10px; }
+            .adguard-value { font-size: 16px; }
+            .adguard-label { font-size: 10px; }
+            .tab-content { padding: 0; }
+            .section-title { font-size: 14px; margin: 12px 0 8px; }
+            .info-row { font-size: 12px; padding: 6px 0; }
+            .toggle-switch { width: 40px; height: 22px; }
+            .toggle-switch::after { width: 18px; height: 18px; }
+            input[type="text"], input[type="number"], select, textarea { font-size: 14px; padding: 8px 10px; }
+            .form-group { margin-bottom: 12px; }
+            .form-label { font-size: 12px; margin-bottom: 4px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 8px; }
+            .header { padding: 8px 10px; }
+            .header .logo h1 { font-size: 16px; }
+            .header .logo-icon { font-size: 24px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .stat-card { padding: 10px; }
+            .stat-value { font-size: 18px; }
+            .stat-label { font-size: 11px; }
+            .nav-tab { padding: 6px 10px; font-size: 11px; }
+            .card { padding: 10px; }
+            .btn { padding: 5px 10px; font-size: 11px; }
+            .gauge-container { transform: scale(0.75); }
+            .device-table { font-size: 10px; }
+            .device-table th, .device-table td { padding: 5px 3px; }
+            .modal-content { margin: 5px; max-width: calc(100vw - 10px) !important; }
+            .chart-container { height: 180px !important; }
+        }
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .adguard-stats { grid-template-columns: repeat(3, 1fr) !important; }
         }
     </style>
 </head>
@@ -1361,6 +1425,8 @@
         let trafficChart = null;
         let trafficHistory = [];
         let currentTab = 'dashboard';
+        // 接口级别的真实总速率（从/api/summary获取，和顶部显示一致）
+        let globalRateFromSummary = { upload: 0, download: 0 };
 
         // ============================================================
         // 自定义下拉选择框组件
@@ -1498,6 +1564,10 @@
             try {
                 const res = await fetch('/api/summary');
                 const data = await res.json();
+
+                // 保存接口级别的真实总速率，用于流量曲线图
+                globalRateFromSummary.upload = data.avg_upload_rate || 0;
+                globalRateFromSummary.download = data.avg_download_rate || 0;
 
                 // 计算管理设备统计
                 const blockedCount = allDevices ? allDevices.filter(d => d.is_blocked === 1).length : 0;
@@ -2237,9 +2307,10 @@
         }
 
         function updateTrafficChart() {
-            const online = allDevices.filter(d => d.is_online);
-            const totalUp = online.reduce((s, d) => s + (d.current_upload_rate || 0), 0);
-            const totalDown = online.reduce((s, d) => s + (d.current_download_rate || 0), 0);
+            // 使用接口级别的真实总速率（从eth0直接读取），和顶部显示一致
+            // 不再使用设备速率之和，因为有些设备可能没被统计到
+            const totalUp = globalRateFromSummary.upload;
+            const totalDown = globalRateFromSummary.download;
             const now = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
             trafficHistory.push({ time: now, up: totalUp, down: totalDown });
@@ -2753,15 +2824,18 @@
 
             await loadSummary();
             await loadDevices();
+            updateTrafficChart();
 
-            // 定时刷新
+            // 统一3秒刷新：先更新summary（获取接口真实速率），再更新曲线图
+            // 设备列表5秒刷新一次，减少API调用
             setInterval(async () => {
                 await loadSummary();
-                await loadDevices();
                 updateTrafficChart();
-            }, 5000);
+            }, 3000);
 
-            setInterval(updateTrafficChart, 10000);
+            setInterval(async () => {
+                await loadDevices();
+            }, 5000);
         }
 
         // 点击弹窗外部关闭

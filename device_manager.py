@@ -726,6 +726,25 @@ IPV6_SPOOF_RUNNING = False
 IPV6_SPOOF_HEARTBEAT = 0
 
 
+def _get_current_ipv6_prefix(interface=MANAGE_INTERFACE):
+    """动态获取当前IPv6前缀"""
+    try:
+        import subprocess
+        result = subprocess.run(["ip", "-6", "addr", "show", interface],
+                                capture_output=True, text=True)
+        for line in result.stdout.split("\n"):
+            if "inet6" in line and "scope global" in line and "temporary" not in line:
+                addr = line.split()[1].split("/")[0]
+                # 提取前64位前缀
+                parts = addr.split(":")
+                if len(parts) >= 4:
+                    prefix = ":".join(parts[:4]) + "::"
+                    return prefix
+    except Exception:
+        pass
+    return "2409:8a62:6927:9ac0::"  # 默认前缀（ fallback ）
+
+
 def send_ra_advertisement(interface=MANAGE_INTERFACE):
     """发送Router Advertisement消息，让设备以为Orange Pi是IPv6路由器"""
     try:
@@ -745,6 +764,9 @@ def send_ra_advertisement(interface=MANAGE_INTERFACE):
         if not local_ipv6:
             local_ipv6 = "fe80::1"
 
+        # 动态获取当前IPv6前缀
+        current_prefix = _get_current_ipv6_prefix(interface)
+
         # 构造RA消息
         ra = IPv6(src=local_ipv6, dst="ff02::1") / ICMPv6ND_RA(
             routerlifetime=1800,  # 路由器生存时间30分钟
@@ -752,18 +774,18 @@ def send_ra_advertisement(interface=MANAGE_INTERFACE):
             retranstimer=0
         ) / ICMPv6NDOptSrcLLAddr(lladdr=LOCAL_MAC)
 
-        # 添加前缀信息（使用当前IPv6前缀）
+        # 添加前缀信息（使用动态获取的当前IPv6前缀）
         try:
             prefix_info = ICMPv6NDOptPrefixInfo(
                 prefixlen=64,
                 L=1, A=1,
                 validlifetime=2592000,
                 preferredlifetime=604800,
-                prefix="2409:8a62:6925:d930::"
+                prefix=current_prefix
             )
             ra = ra / prefix_info
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[IPv6Spoof] 前缀信息构造失败: {e}, prefix={current_prefix}")
 
         send(ra, iface=interface, verbose=0)
         return True

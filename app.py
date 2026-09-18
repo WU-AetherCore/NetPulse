@@ -42,6 +42,14 @@ app.config['JSON_AS_ASCII'] = False
 # 全局变量
 scanner = None
 traffic_monitor = None
+# 接口级别的全局速率（直接从eth0读取，更准确）
+global_interface_rates = {
+    'upload_kbps': 0.0,
+    'download_kbps': 0.0,
+    'upload_bytes': 0,
+    'download_bytes': 0,
+    'last_update': 0
+}
 
 
 
@@ -88,6 +96,10 @@ def index():
 def api_summary():
     """系统概览"""
     summary = get_summary()
+    # 使用接口级别的真实总速率（直接从eth0读取，比设备速率之和更准确）
+    if global_interface_rates['last_update'] > 0:
+        summary['avg_upload_rate'] = global_interface_rates['upload_kbps']
+        summary['avg_download_rate'] = global_interface_rates['download_kbps']
     summary['formatted'] = {
         'total_upload': format_bytes(summary['total_upload']),
         'total_download': format_bytes(summary['total_download']),
@@ -759,9 +771,13 @@ def main():
     except Exception as e:
         print(f"[Startup] IPv6欺骗启动失败: {e}")
 
+    # 启动全局接口速率监控线程
+    print("[Init] 启动全局接口速率监控线程...")
+    global_rate_thread = threading.Thread(target=_monitor_global_interface_speed, daemon=True)
+    global_rate_thread.start()
+
     # 启动健康检查线程（自动修复机制）
     print("[Init] 启动健康检查线程（自动修复）...")
-    import threading
     health_thread = threading.Thread(target=health_check_loop, daemon=True)
     health_thread.start()
 
@@ -838,6 +854,61 @@ def api_qos_init():
 # 测速实时速率监控
 speedtest_realtime = {'upload': 0, 'download': 0, 'running': False, 'history': []}
 speedtest_monitor_thread = None
+
+
+def _monitor_global_interface_speed():
+    """常驻监控eth0接口的实时速率（用于全局总速率显示）"""
+    import time
+    global global_interface_rates
+    last_rx = 0
+    last_tx = 0
+    last_time = time.time()
+
+    # 读取初始值
+    try:
+        with open('/proc/net/dev', 'r') as f:
+            for line in f:
+                if 'eth0:' in line:
+                    parts = line.split()
+                    last_rx = int(parts[1])
+                    last_tx = int(parts[9])
+                    break
+    except Exception:
+        pass
+
+    print("[GlobalRate] 全局接口速率监控线程已启动")
+
+    while True:
+        try:
+            time.sleep(3)
+            current_rx = 0
+            current_tx = 0
+            with open('/proc/net/dev', 'r') as f:
+                for line in f:
+                    if 'eth0:' in line:
+                        parts = line.split()
+                        current_rx = int(parts[1])
+                        current_tx = int(parts[9])
+                        break
+
+            now = time.time()
+            delta = now - last_time
+            if delta > 0:
+                # 转换为 KB/s (1 KB = 1024 bytes)
+                download_kbps = max(0, (current_rx - last_rx) / delta / 1024)
+                upload_kbps = max(0, (current_tx - last_tx) / delta / 1024)
+                global_interface_rates['upload_kbps'] = upload_kbps
+                global_interface_rates['download_kbps'] = download_kbps
+                global_interface_rates['upload_bytes'] = current_tx
+                global_interface_rates['download_bytes'] = current_rx
+                global_interface_rates['last_update'] = now
+
+            last_rx = current_rx
+            last_tx = current_tx
+            last_time = now
+        except Exception as e:
+            print(f"[GlobalRate] 监控错误: {e}")
+            time.sleep(3)
 
 
 def _monitor_interface_speed():
