@@ -45,15 +45,18 @@
 ### 🚫 设备控制
 - **封禁设备**：一键踢出网络（ARP欺骗 + iptables DROP）
 - **设备限速**：基于 tc HTB 的上下行限速（可设独立上下行带宽）
+- **网络优先级（QoS）**：高/中/低三级，拥塞时优先保障高优先级设备（不是限速）
 - **全局流量监控**：一键开启，所有设备流量自动经过管理设备
-- **自动修复机制**：ARP欺骗心跳检测，掉线自动恢复，NAT规则自动修复
+- **自动修复机制**：ARP实时抢答+心跳检测，掉线自动恢复，统计链/NAT 规则自动修复
 
 ### 📈 流量统计
-- iptables 内核级精确流量计数
+- iptables 内核级精确流量计数（独立统计链，与设备规则互不影响）
+- IPv4 + IPv6 合并统计
 - 实时上传/下载速率（滑动窗口平均）
 - 每设备累计流量统计
 - 24小时/7天/30天流量趋势图（柱状图）
 - 全局流量监控默认开启，开机自动启动
+- 统计链丢失后约10秒内自动重建，重启/掉线后可自愈
 
 ### 🏆 流量排行
 - 按今天/本周/本月统计
@@ -125,6 +128,8 @@
 curl -sSL https://raw.githubusercontent.com/WU-AetherCore/NetPulse/main/install.sh | sudo bash
 ```
 
+安装过程中会提示设置 Web 管理员密码（也可用环境变量 `NETPULSE_ADMIN_PASSWORD` 非交互传入）。
+
 安装完成后访问：`http://<设备IP>:8081`
 
 ### 方式二：手动部署
@@ -191,6 +196,8 @@ ifconfig | grep ether
 # 或
 ip link show eth0
 ```
+
+> 🔐 **安全提示（重要）**：管理员密码不要写死在 `config.py` 里。仓库自带的 `config.py` 是脱敏模板，密码通过环境变量 `NETPULSE_ADMIN_PASSWORD` 读取（默认 `admin123`，仅限首次登录，请务必修改）。可复制 `env.example` 为 `.env` 填写真实密码，并在 systemd 服务中用 `EnvironmentFile=/opt/netpulse/.env` 加载。`.env` 已在 `.gitignore` 中，不会被提交。
 
 ### 第五步：配置 systemd 服务（开机自启）
 
@@ -420,7 +427,7 @@ sudo /opt/AdGuardHome/AdGuardHome -s uninstall
 | `GATEWAY_IP` | `192.168.1.1` | 网关IP（用于ARP欺骗） |
 | `LOCAL_MAC` | - | 本机MAC地址（必须配置） |
 | `MANAGE_INTERFACE` | `eth0` | 管理网口 |
-| `SCAN_INTERVAL` | `30` | 设备扫描间隔（秒） |
+| `SCAN_INTERVAL` | `60` | 设备扫描间隔（秒；较大间隔可降低 ARP 广播风暴、提升无线稳定性） |
 | `TRAFFIC_INTERVAL` | `3` | 流量统计间隔（秒） |
 | `TRAFFIC_CHAIN` | `NETPULSE` | iptables链名 |
 | `HOURLY_RETENTION_DAYS` | `7` | 小时流量保留天数 |
@@ -428,6 +435,7 @@ sudo /opt/AdGuardHome/AdGuardHome -s uninstall
 | `OFFLINE_THRESHOLD` | `120` | 设备离线判定阈值（秒） |
 | `ADGUARD_URL` | `http://127.0.0.1:3000` | AdGuard Home API 地址 |
 | `GLOBAL_SPOOF_DEFAULT` | `True` | 全局流量监控默认开启 |
+| `ADMIN_PASSWORD` | 环境变量 `NETPULSE_ADMIN_PASSWORD` | Web 管理密码，请勿硬编码在 config.py（见 env.example） |
 
 ---
 
@@ -446,12 +454,13 @@ NetPulse 需要设备流量经过管理设备才能统计流量。有两种方�
 
 **原理**：通过ARP欺骗让所有设备以为网关是管理设备，流量自动转发。
 
-**自动恢复机制**：
-- 每10秒进行一次健康检查
-- 每30秒检查 ARP 欺骗和 NAT 规则是否正常
-- 如果发现 ARP 欺骗失效，自动重新发送 ARP 包
-- 如果发现 NAT 规则丢失，自动重新配置
-- 如果服务崩溃，crontab 监控脚本会自动重启
+**自动恢复机制（v2.5 增强）**：
+- ARP 采用「实时抢答 + 1 秒高频定时推送」双线程：设备一发起 `who-has` 网关查询立即抢答（burst 连发抢占），并监听真网关/中继发出的网关 ARP Reply 进行反向压制，显著提升无线中继场景下的劫持稳定性
+- 推送线程与抢答线程均带心跳，任一线程心跳超过 30 秒无更新即被判定死亡并整体自动重启
+- 独立流量统计链 `NETSTATS`/`NETSTATS6` 与设备封禁/限速规则完全分离：每 3 秒采样校验，统计链丢失约 10 秒内自动重建，计数器回退自动重置基线——重启、掉线后速率不再恒为 0 或呈直线
+- NAT、IP 转发（IPv4/IPv6）规则丢失自动重新配置；IPv4+IPv6 流量合并统计
+- 扫描限速（分批 + 60 秒间隔），把 ARP 广播包速率降低约 90%，避免广播风暴挤占 WiFi 空口
+- 如果服务进程本身崩溃，crontab 监控脚本会自动重启
 
 **注意**：
 - 开启期间管理设备必须保持运行，否则设备会断网
@@ -481,6 +490,14 @@ NetPulse 需要设备流量经过管理设备才能统计流量。有两种方�
 5. 点击「取消」解除限速
 
 **原理**：基于 tc HTB（Hierarchical Token Bucket）的流量控制，可独立设置上下行带宽。
+
+### 设置网络优先级（QoS）
+
+1. 进入「设备列表」，点击「优先级」按钮
+2. 选择 高 / 中（默认）/ 低
+3. 高优先级设备在网络拥塞时优先获得带宽保障，低优先级设备让路
+
+**原理**：tc HTB 三级优先级类（prio 1/2/3），这是「拥塞时的调度优先级」，**不是限速**；不拥塞时所有设备速度一致。
 
 ### 标注WiFi频段
 
@@ -648,18 +665,31 @@ POST /api/period-reset
 
 ## 🛠️ 常见问题
 
-### Q: 流量统计显示0怎么办？
-A: 需要开启「全局流量监控模式」（默认开启），或者手动将设备网关设置为管理设备IP。如果已开启但仍为0，检查：
+### Q: 流量统计显示0 / 速率一直是直线怎么办？
+A: v2.5 已把流量统计链 `NETSTATS`/`NETSTATS6` 独立出来并带自动重建（丢失约10秒自愈）。若仍异常，按顺序排查：
 ```bash
-# 检查IP转发
-cat /proc/sys/net/ipv4/ip_forward  # 应该返回1
+# 1. 统计链是否存在、计数器是否在涨
+sudo iptables -L NETSTATS -n -v -x
+sudo ip6tables -L NETSTATS6 -n -v -x
 
-# 检查NAT规则
+# 2. 全局监控是否开启、两个欺骗线程是否存活（thread_alive / sniffer_alive 应为 true）
+curl -s http://localhost:8081/api/global-spoof/status
+
+# 3. IP 转发与 NAT
+cat /proc/sys/net/ipv4/ip_forward   # 应为 1
 sudo iptables -t nat -L POSTROUTING -n
 
-# 检查ARP欺骗进程
-ps aux | grep arpspoof
+# 4. 看实时日志（是否在反复重建/抢答）
+sudo journalctl -u netpulse -f
 ```
+统计链异常时程序会自动重建，无需手动干预；计数器回退（如重启、手动删链）会自动重置基线，不会再出现负速率或卡死。
+
+### Q: 为什么手机看视频实际有几 MB/s，界面却明显偏小？
+A: 这通常不是统计程序问题，而是**无线中继拓扑下个别设备的网关 ARP 缓存漂移**——设备省电休眠醒来后，可能短暂把网关指回真路由，这段流量不经过板子就统计不到。v2.5 用「ARP 实时抢答 + burst 连发 + 反向压制真路由宣告 + 1 秒定时兜底」大幅降低了这种漂移。可用以下命令确认某设备（如手机 192.168.1.5）二层帧是否稳定经过本机 MAC：
+```bash
+sudo tcpdump -i eth0 -nn -e 'host 192.168.1.5'
+```
+若数据帧在本机 MAC 与真网关 MAC 之间反复横跳，说明空口侧仍在竞争，可把该设备 WiFi 设置为「始终保持连接/关闭省电」，或改用有线连接管理设备。
 
 ### Q: 开启全局监控后设备断网了？
 A: 检查管理设备的IP转发是否开启：
@@ -679,8 +709,9 @@ sudo journalctl -u netpulse -f
 ### Q: 设备封禁不生效？
 A: 确保设备和管理设备在同一网段，并且管理设备有root权限。检查：
 ```bash
-sudo iptables -L NETPULSE -n
+sudo iptables -L NETPULSE_BLOCK -n
 ```
+注意：与流量统计同理，封禁/限速依赖设备流量经过管理设备；无线中继下个别省电设备可能短暂漂移，实时抢答机制会持续把它拉回。
 
 ### Q: 如何修改Web端口？
 A: 编辑 `config.py` 中的 `WEB_PORT`，然后重启服务：
@@ -688,8 +719,11 @@ A: 编辑 `config.py` 中的 `WEB_PORT`，然后重启服务：
 sudo systemctl restart netpulse
 ```
 
+### Q: 忘记管理员密码？
+A: 通过环境变量重置。编辑服务的环境文件（如 `/opt/netpulse/.env`）写入 `NETPULSE_ADMIN_PASSWORD=新密码`，然后 `sudo systemctl restart netpulse`。
+
 ### Q: 数据存在哪里？
-A: SQLite数据库文件 `netpulse.db`，在程序运行目录下（`/home/orangepi/netpulse/netpulse.db`）。
+A: SQLite数据库文件 `netpulse.db`，在程序运行目录下（`/opt/netpulse/netpulse.db`）。
 
 ### Q: 如何备份数据？
 A: 复制 `netpulse.db` 文件即可，恢复时放回原目录。建议定期备份：
@@ -698,7 +732,7 @@ cp netpulse.db netpulse.db.backup.$(date +%Y%m%d)
 ```
 
 ### Q: 支持哪些路由器？
-A: 任何标准路由器都支持，不需要路由器特殊功能。中继模式下也能正常工作。支持跨网段设备扫描。
+A: 任何标准路由器都支持，不需要路由器特殊功能。中继模式下也能正常工作（v2.5 针对无线中继做了 ARP 实时抢答加固）。支持跨网段设备扫描。
 
 ### Q: AdGuard Home 广告过滤不生效？
 A: 检查以下几点：
@@ -736,7 +770,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ### Q: 如何更新 NetPulse？
 A: 
 ```bash
-cd /home/orangepi/netpulse
+cd /opt/netpulse
 git pull
 sudo systemctl restart netpulse
 ```
@@ -748,17 +782,18 @@ sudo systemctl restart netpulse
 ```
 NetPulse/
 ├── app.py              # Flask主程序，Web界面和API
-├── config.py           # 配置文件
+├── config.py           # 配置文件（仓库内为脱敏模板，真实配置不提交）
+├── env.example         # 环境变量示例（管理员密码等敏感项）
 ├── database.py         # SQLite数据库操作
-├── scanner.py          # 设备扫描模块（ARP+Ping，支持跨网段）
+├── scanner.py          # 设备扫描模块（ARP+Ping，分批限速，支持跨网段）
 ├── traffic.py          # 流量统计模块（iptables）
-├── device_manager.py   # 设备管理模块（ARP欺骗/封禁/限速/自动修复）
+├── device_manager.py   # 设备管理（ARP实时抢答/封禁/限速/QoS/统计链自愈）
 ├── requirements.txt    # Python依赖
 ├── netpulse.service    # systemd服务文件
 ├── netpulse-monitor.sh # 自动监控恢复脚本
 ├── install.sh          # 一键安装脚本
 ├── templates/
-│   └── index.html      # Web前端界面
+│   └── index.html      # Web前端界面（响应式，适配手机端）
 ├── 01_dashboard.png    # 界面截图-仪表盘
 ├── 02_devices.png      # 界面截图-设备列表
 ├── 03_device_detail.png # 界面截图-设备详情
@@ -774,13 +809,22 @@ NetPulse/
 
 - **后端**：Python 3 + Flask
 - **数据库**：SQLite（WAL模式）
-- **前端**：原生HTML/CSS/JavaScript + Chart.js
-- **流量统计**：iptables 内核级计数
-- **设备控制**：ARP欺骗 + iptables DROP + tc HTB
+- **前端**：原生HTML/CSS/JavaScript + Chart.js（响应式）
+- **流量统计**：iptables 独立计数链 NETSTATS/NETSTATS6（IPv4+IPv6）
+- **设备控制**：ARP 实时抢答 + iptables DROP + tc HTB
 - **广告过滤**：AdGuard Home + DNS 劫持
 - **浏览记录**：AdGuard Home querylog API
-- **自动修复**：健康检查线程 + crontab 监控脚本
+- **自动修复**：双线程心跳看护 + 统计链自愈 + 健康检查线程 + crontab 监控脚本
 - **服务管理**：systemd
+
+---
+
+## 🔒 安全说明
+
+- 仓库内 `config.py` 为脱敏模板，不含任何真实 MAC、白名单或密码；部署时由 `install.sh` 生成真实配置
+- 管理员密码等敏感信息一律通过环境变量 / `.env` 提供（见 `env.example`），`.env` 已被 `.gitignore` 忽略
+- 代码中不保存任何 sudo 密码：生产环境 systemd 以 root 运行；非 root 调试依赖免密 `sudo -n`
+- 本工具需要 root 权限以配置 iptables/tc，请仅在你自己拥有并有权管理的网络中使用
 
 ---
 
