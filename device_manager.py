@@ -22,9 +22,16 @@ def run_cmd(cmd, timeout=10):
 
 
 def run_sudo(cmd, timeout=10):
-    """执行sudo命令"""
-    full_cmd = f"echo orangepi | sudo -S {cmd}"
-    return run_cmd(full_cmd, timeout)
+    """执行需要管理员权限的命令。
+    生产环境 netpulse.service 以 root 运行，直接执行即可；
+    非 root 环境（如开发调试）依赖免密 sudo（sudo -n），不在代码中保存任何密码。
+    """
+    try:
+        if hasattr(os, 'geteuid') and os.geteuid() == 0:
+            return run_cmd(cmd, timeout)
+        return run_cmd(f"sudo -n {cmd}", timeout)
+    except Exception as e:
+        return str(e), -1
 
 
 # ============================================================
@@ -193,7 +200,7 @@ def block_device(ip, mac):
 
 
 def unblock_device(ip, mac):
-    """解除设备封禁"""
+    """解除封禁"""
     # 删除iptables规则
     run_sudo(f"iptables -D {BLOCK_CHAIN} -s {ip} -j DROP 2>/dev/null")
     run_sudo(f"iptables -D {BLOCK_CHAIN} -d {ip} -j DROP 2>/dev/null")
@@ -436,6 +443,23 @@ global_spoof_thread = None
 global_spoof_running = False
 global_spoof_heartbeat = 0  # 心跳时间戳，用于检测线程是否存活
 
+# ARP 请求实时抢答线程（监听 who-has 网关请求并立即应答，比定时推送可靠得多）
+arp_sniffer_thread = None
+arp_sniffer_running = False
+arp_sniffer_heartbeat = 0
+
+
+def _get_local_ip(interface=MANAGE_INTERFACE):
+    """动态获取本机指定接口的 IPv4 地址"""
+    try:
+        out, _ = run_cmd(f"ip -4 -o addr show {interface} 2>/dev/null | awk '{{print $4}}' | cut -d/ -f1")
+        out = out.strip()
+        if out:
+            return out.splitlines()[0].strip()
+    except Exception:
+        pass
+    return "192.168.1.10"
+
 
 def restore_arp_for_device(ip, mac):
     """恢复设备的正确ARP表（发送正确的网关MAC）"""
@@ -489,14 +513,127 @@ def _global_spoof_loop():
                 if gateway_mac:
                     send_arp_reply(GATEWAY_IP, gateway_mac, ip, LOCAL_MAC, MANAGE_INTERFACE)
 
-            # 每5秒发送一次（平衡效果和性能，减少网络开销）
-            time.sleep(5)
+            # 每1秒推送一次（实时抢答为主、高频定时推送兜底，持续占住设备网关缓存，
+            # 防止设备省电休眠醒来后被中继在WiFi侧重刷）
+            time.sleep(1)
 
         except Exception as e:
             print(f"[GlobalSpoof] 欺骗循环错误: {e}")
-            time.sleep(5)
+            time.sleep(1)
 
     print("[GlobalSpoof] 全局ARP欺骗线程已停止")
+
+
+def _arp_sniffer_loop():
+    """ARP 请求实时抢答线程。
+
+    持续监听网卡上的 ARP Request（who-has）：
+      - 设备询问网关 MAC 时，立即抢答"网关是我"（在真网关/中继路由器应答前发出）；
+      - 网关询问某设备 MAC 时，立即抢答"该设备是我"。
+    设备主动发起查询时一定会接受应答，比定时推送 unsolicited reply 可靠得多，
+    尤其针对无线中继场景下手机/平板忽略主动推送的问题。
+    """
+    global arp_sniffer_running, arp_sniffer_heartbeat
+    print("[ArpSniffer] ARP实时抢答线程已启动")
+
+    whitelist = {m.lower() for m in SPOOF_WHITELIST}
+    local_ip = _get_local_ip()
+    gateway_mac_cache = get_mac_by_ip(GATEWAY_IP)
+
+    sock = None
+    while arp_sniffer_running:
+        try:
+            if sock is None:
+                sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0806))
+                sock.bind((MANAGE_INTERFACE, socket.htons(0x0806)))
+                sock.settimeout(1.0)
+
+            arp_sniffer_heartbeat = time.time()
+            try:
+                pkt = sock.recv(65535)
+            except socket.timeout:
+                continue
+            except OSError:
+                sock = None
+                time.sleep(1)
+                continue
+
+            if len(pkt) < 42:
+                continue
+            # 仅处理 ARP
+            eth_proto = struct.unpack('!H', pkt[12:14])[0]
+            if eth_proto != 0x0806:
+                continue
+            op = struct.unpack('!H', pkt[20:22])[0]
+            if op not in (1, 2):  # 1=request 请求抢答；2=reply 用于侦听敌方网关宣告并压制
+                continue
+
+            sender_mac = ':'.join(f'{b:02x}' for b in pkt[22:28])
+            sender_ip = socket.inet_ntoa(pkt[28:32])
+            target_ip = socket.inet_ntoa(pkt[38:42])
+
+            if sender_mac.lower() == LOCAL_MAC.lower():
+                continue  # 忽略自己发的
+
+            def _burst_gateway(dev_ip, dev_mac, n=3):
+                """对单个设备连发 n 个'网关是本机'reply，提高WiFi客户端接收概率"""
+                for _ in range(n):
+                    send_arp_reply(dev_ip, dev_mac, GATEWAY_IP, LOCAL_MAC, MANAGE_INTERFACE)
+                    time.sleep(0.02)
+
+            if op == 1:  # ARP Request（who-has）
+                is_lan_device = (sender_ip.startswith('192.168.1.')
+                                 and sender_ip != GATEWAY_IP and sender_ip != local_ip
+                                 and sender_mac.lower() not in whitelist)
+
+                # 情况1：局域网设备询问网关 -> 立即抢答"网关MAC是本机"（连发抢占）
+                if target_ip == GATEWAY_IP and is_lan_device:
+                    _burst_gateway(sender_ip, sender_mac, 4)
+                    if not gateway_mac_cache:
+                        gateway_mac_cache = get_mac_by_ip(GATEWAY_IP)
+                    if gateway_mac_cache:
+                        send_arp_reply(GATEWAY_IP, gateway_mac_cache, sender_ip, LOCAL_MAC, MANAGE_INTERFACE)
+
+                # 情况2：网关询问某局域网设备 -> 立即抢答"该设备MAC是本机"
+                elif (sender_ip == GATEWAY_IP
+                        and target_ip.startswith('192.168.1.')
+                        and target_ip != GATEWAY_IP and target_ip != local_ip):
+                    if not gateway_mac_cache:
+                        gateway_mac_cache = get_mac_by_ip(GATEWAY_IP)
+                    if gateway_mac_cache:
+                        send_arp_reply(GATEWAY_IP, gateway_mac_cache, target_ip, LOCAL_MAC, MANAGE_INTERFACE)
+
+                # 情况3：设备有任何ARP活动（刚唤醒/重连）-> 借机强化一次它的网关缓存
+                elif is_lan_device:
+                    _burst_gateway(sender_ip, sender_mac, 2)
+
+            elif op == 2:  # ARP Reply：侦听敌方（真网关/中继）的网关宣告并立即压制
+                # 形如 "192.168.1.1 is-at <非本机MAC>"，目标是某局域网设备
+                if (sender_ip == GATEWAY_IP
+                        and sender_mac.lower() != LOCAL_MAC.lower()
+                        and target_ip.startswith('192.168.1.')
+                        and target_ip != GATEWAY_IP and target_ip != local_ip):
+                    # 查到该设备真实MAC后，用更高频的"网关是本机"覆盖
+                    dev_mac = get_mac_by_ip(target_ip)
+                    if dev_mac and dev_mac.lower() not in whitelist:
+                        _burst_gateway(target_ip, dev_mac, 4)
+
+        except Exception as e:
+            print(f"[ArpSniffer] 抢答循环错误: {e}")
+            try:
+                if sock:
+                    sock.close()
+            except Exception:
+                pass
+            sock = None
+            time.sleep(1)
+
+    try:
+        if sock:
+            sock.close()
+    except Exception:
+        pass
+    print("[ArpSniffer] ARP实时抢答线程已停止")
 
 
 def ensure_nat_and_forwarding():
@@ -528,35 +665,43 @@ def ensure_nat_and_forwarding():
 
 
 def ensure_global_spoof_running():
-    """检查全局ARP欺骗线程是否存活，死亡则自动重启（自动修复机制）"""
+    """检查ARP欺骗线程（定时推送 + 实时抢答）是否存活，死亡则自动重启"""
     global global_spoof_enabled, global_spoof_thread, global_spoof_running, global_spoof_heartbeat
+    global arp_sniffer_thread, arp_sniffer_running
 
     if not global_spoof_enabled:
         return False  # 用户未开启，不需要修复
 
-    # 检查线程是否存活
+    # 检查定时欺骗线程
     thread_alive = global_spoof_thread is not None and global_spoof_thread.is_alive()
-
-    # 检查心跳（超过30秒没更新说明线程卡住了）
     heartbeat_ok = (time.time() - global_spoof_heartbeat) < 30 if global_spoof_heartbeat > 0 else False
 
-    if thread_alive and heartbeat_ok:
-        return True  # 正常运行
+    # 检查实时抢答线程
+    sniffer_alive = arp_sniffer_thread is not None and arp_sniffer_thread.is_alive()
+    sniffer_hb_ok = (time.time() - arp_sniffer_heartbeat) < 30 if arp_sniffer_heartbeat > 0 else False
 
-    print(f"[HealthCheck] 检测到ARP欺骗异常！线程存活={thread_alive}, 心跳正常={heartbeat_ok}，正在自动重启...")
+    if thread_alive and heartbeat_ok and sniffer_alive and sniffer_hb_ok:
+        return True  # 全部正常
+
+    print(f"[HealthCheck] ARP欺骗异常！推送线程存活={thread_alive}/心跳={heartbeat_ok}, "
+          f"抢答线程存活={sniffer_alive}/心跳={sniffer_hb_ok}，正在自动重启...")
 
     # 强制重置状态
     global_spoof_running = False
+    arp_sniffer_running = False
     if global_spoof_thread:
         global_spoof_thread.join(timeout=3)
+    if arp_sniffer_thread:
+        arp_sniffer_thread.join(timeout=3)
     global_spoof_thread = None
+    arp_sniffer_thread = None
     global_spoof_enabled = False
 
-    # 重新启动
+    # 重新启动（会同时拉起推送线程和抢答线程）
     time.sleep(1)
     success = start_global_spoof()
     if success:
-        print("[HealthCheck] ARP欺骗线程已自动重启成功")
+        print("[HealthCheck] ARP欺骗线程（含实时抢答）已自动重启成功")
     else:
         print("[HealthCheck] ARP欺骗线程重启失败")
     return success
@@ -565,6 +710,7 @@ def ensure_global_spoof_running():
 def start_global_spoof():
     """开启全局ARP欺骗模式 - 所有设备流量自动经过Orange Pi"""
     global global_spoof_enabled, global_spoof_thread, global_spoof_running, global_spoof_heartbeat
+    global arp_sniffer_thread, arp_sniffer_running, arp_sniffer_heartbeat
 
     if global_spoof_enabled:
         print("[GlobalSpoof] 全局欺骗已在运行中")
@@ -573,14 +719,21 @@ def start_global_spoof():
     # 确保IP转发和NAT规则
     ensure_nat_and_forwarding()
 
-    # 启动全局欺骗线程
+    # 启动定时推送欺骗线程
     global_spoof_running = True
     global_spoof_heartbeat = time.time()
     global_spoof_thread = threading.Thread(target=_global_spoof_loop, daemon=True)
     global_spoof_thread.start()
+
+    # 启动 ARP 请求实时抢答线程
+    arp_sniffer_running = True
+    arp_sniffer_heartbeat = time.time()
+    arp_sniffer_thread = threading.Thread(target=_arp_sniffer_loop, daemon=True)
+    arp_sniffer_thread.start()
+
     global_spoof_enabled = True
 
-    print("[GlobalSpoof] 全局ARP欺骗模式已开启")
+    print("[GlobalSpoof] 全局ARP欺骗模式已开启（定时推送 + 实时抢答）")
     print("[GlobalSpoof] 所有设备流量将自动经过Orange Pi")
     return True
 
@@ -588,16 +741,20 @@ def start_global_spoof():
 def stop_global_spoof():
     """关闭全局ARP欺骗模式 - 恢复所有设备的正常网络"""
     global global_spoof_enabled, global_spoof_running
+    global arp_sniffer_running, arp_sniffer_thread
 
     if not global_spoof_enabled:
         return True
 
     print("[GlobalSpoof] 正在关闭全局ARP欺骗...")
     global_spoof_running = False
+    arp_sniffer_running = False
 
     # 等待线程结束
     if global_spoof_thread:
         global_spoof_thread.join(timeout=5)
+    if arp_sniffer_thread:
+        arp_sniffer_thread.join(timeout=5)
 
     # 恢复所有设备的ARP表
     try:
@@ -627,11 +784,15 @@ def get_global_spoof_status():
     """获取全局欺骗状态"""
     thread_alive = global_spoof_thread is not None and global_spoof_thread.is_alive()
     heartbeat_age = time.time() - global_spoof_heartbeat if global_spoof_heartbeat > 0 else -1
+    sniffer_alive = arp_sniffer_thread is not None and arp_sniffer_thread.is_alive()
+    sniffer_age = time.time() - arp_sniffer_heartbeat if arp_sniffer_heartbeat > 0 else -1
     return {
         "enabled": global_spoof_enabled,
         "running": global_spoof_running,
         "thread_alive": thread_alive,
         "heartbeat_age": round(heartbeat_age, 1),
+        "sniffer_alive": sniffer_alive,
+        "sniffer_heartbeat_age": round(sniffer_age, 1),
         "description": "全局流量监控模式" if global_spoof_enabled else "未开启"
     }
 
@@ -742,7 +903,7 @@ def _get_current_ipv6_prefix(interface=MANAGE_INTERFACE):
                     return prefix
     except Exception:
         pass
-    return "2409:8a62:6927:9ac0::"  # 默认前缀（ fallback ）
+    return None  # 检测失败返回 None，由调用方跳过前缀信息（不硬编码任何真实前缀）
 
 
 def send_ra_advertisement(interface=MANAGE_INTERFACE):
@@ -774,18 +935,19 @@ def send_ra_advertisement(interface=MANAGE_INTERFACE):
             retranstimer=0
         ) / ICMPv6NDOptSrcLLAddr(lladdr=LOCAL_MAC)
 
-        # 添加前缀信息（使用动态获取的当前IPv6前缀）
-        try:
-            prefix_info = ICMPv6NDOptPrefixInfo(
-                prefixlen=64,
-                L=1, A=1,
-                validlifetime=2592000,
-                preferredlifetime=604800,
-                prefix=current_prefix
-            )
-            ra = ra / prefix_info
-        except Exception as e:
-            print(f"[IPv6Spoof] 前缀信息构造失败: {e}, prefix={current_prefix}")
+        # 添加前缀信息（仅在动态检测到当前IPv6前缀时；检测不到则跳过，不使用硬编码前缀）
+        if current_prefix:
+            try:
+                prefix_info = ICMPv6NDOptPrefixInfo(
+                    prefixlen=64,
+                    L=1, A=1,
+                    validlifetime=2592000,
+                    preferredlifetime=604800,
+                    prefix=current_prefix
+                )
+                ra = ra / prefix_info
+            except Exception as e:
+                print(f"[IPv6Spoof] 前缀信息构造失败: {e}, prefix={current_prefix}")
 
         send(ra, iface=interface, verbose=0)
         return True
@@ -987,37 +1149,233 @@ def full_health_check():
     # 5. 检查NAT规则
     results["nat"] = "正常" if ensure_nat_and_forwarding() else "异常"
 
-    # 6. 检查IPv4总流量统计规则
+    # 6. 检查独立流量统计链 NETSTATS / NETSTATS6（丢失自动重建）
     try:
-        result = subprocess.run(
-            ['sudo', 'iptables', '-L', 'NETPULSE', '-n'],
-            capture_output=True, text=True, timeout=5
-        )
-        ipv4_total_ok = '192.168.1.0/24' in result.stdout
-        if not ipv4_total_ok:
-            run_sudo("iptables -I NETPULSE 1 -s 192.168.1.0/24")
-            run_sudo("iptables -I NETPULSE 2 -d 192.168.1.0/24")
-            results["ipv4_stats_rules"] = "已修复"
-        else:
-            results["ipv4_stats_rules"] = "正常"
+        stats_ok = ensure_stats_chain()
+        results["stats_chain"] = "正常" if stats_ok else "异常"
     except Exception as e:
-        results["ipv4_stats_rules"] = f"错误: {e}"
-
-    # 7. 检查IPv6总流量统计规则
-    try:
-        result = subprocess.run(
-            ['sudo', 'ip6tables', '-L', 'NETPULSE', '-n'],
-            capture_output=True, text=True, timeout=5
-        )
-        ipv6_total_ok = '2409:8a62:6927:9ac0' in result.stdout
-        if not ipv6_total_ok:
-            run_sudo("ip6tables -I NETPULSE 1 -s 2409:8a62:6927:9ac0::/64")
-            run_sudo("ip6tables -I NETPULSE 2 -d 2409:8a62:6927:9ac0::/64")
-            results["ipv6_stats_rules"] = "已修复"
-        else:
-            results["ipv6_stats_rules"] = "正常"
-    except Exception as e:
-        results["ipv6_stats_rules"] = f"错误: {e}"
+        results["stats_chain"] = f"错误: {e}"
 
     print(f"[HealthCheck] 完整检查结果: {results}")
     return results
+
+
+# ============================================================
+# 独立流量统计链 NETSTATS / NETSTATS6
+# 与设备管理链 NETPULSE 完全分离，设备规则增删不影响统计
+# ============================================================
+
+STATS_CHAIN_V4 = "NETSTATS"
+STATS_CHAIN_V6 = "NETSTATS6"
+
+
+def detect_lan_subnets():
+    """自动检测所有局域网IPv4网段（从所有非lo、非tailscale接口推导）"""
+    subnets = set()
+    try:
+        out, _ = run_cmd("ip -4 -o addr show", timeout=5)
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) < 4:
+                continue
+            iface = parts[1]
+            if iface in ('lo', 'tailscale0') or iface.startswith('docker') or iface.startswith('br-'):
+                continue
+            cidr = parts[3]  # 如 192.168.1.10/24
+            if '/' in cidr:
+                ip_addr, prefix = cidr.split('/')
+                prefix = int(prefix)
+                if prefix == 24:
+                    # 推导 /24 网段
+                    octs = ip_addr.split('.')
+                    subnets.add(f"{octs[0]}.{octs[1]}.{octs[2]}.0/24")
+                elif prefix <= 32:
+                    subnets.add(cidr)
+    except Exception as e:
+        print(f"[Stats] 检测IPv4网段失败: {e}")
+    # 兜底：至少包含常见网段
+    if not subnets:
+        subnets.update(["192.168.1.0/24", "192.168.0.0/24"])
+    return sorted(subnets)
+
+
+def detect_ipv6_prefixes():
+    """自动检测所有全局IPv6 /64前缀"""
+    prefixes = set()
+    try:
+        out, _ = run_cmd("ip -6 -o addr show scope global", timeout=5)
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) < 4:
+                continue
+            iface = parts[1]
+            if iface in ('lo', 'tailscale0') or iface.startswith('docker'):
+                continue
+            cidr = parts[3]
+            if '/' in cidr:
+                addr, prefix = cidr.split('/')
+                if int(prefix) == 64 and addr.count(':') >= 3:
+                    # 取前4组作为 /64 前缀
+                    groups = addr.split(':')
+                    # 处理 :: 缩写
+                    full = []
+                    empty_idx = None
+                    tmp_groups = addr.split('::')
+                    if len(tmp_groups) == 2:
+                        left = tmp_groups[0].split(':') if tmp_groups[0] else []
+                        right = tmp_groups[1].split(':') if tmp_groups[1] else []
+                        all_groups = left + ['0'] * (8 - len(left) - len(right)) + right
+                    else:
+                        all_groups = addr.split(':')
+                    if len(all_groups) >= 4:
+                        prefix6 = ':'.join(all_groups[:4]) + '::/64'
+                        prefixes.add(prefix6)
+    except Exception as e:
+        print(f"[Stats] 检测IPv6前缀失败: {e}")
+    return sorted(prefixes)
+
+
+def setup_stats_chain():
+    """创建/重建独立统计链（幂等操作，可安全重复调用）。
+    结构：
+      FORWARD 第1条 -> jump NETSTATS
+      NETSTATS: 每个网段两条统计规则(上传/下载)，最后 RETURN
+    IPv6 同理使用 NETSTATS6。
+    返回 (ipv4_subnets, ipv6_prefixes)
+    """
+    # ---------- IPv4 ----------
+    v4_subnets = detect_lan_subnets()
+    try:
+        # 先从 FORWARD 摘除旧跳转，清空并删除旧链
+        run_sudo(f"iptables -D FORWARD -j {STATS_CHAIN_V4} 2>/dev/null")
+        run_sudo(f"iptables -F {STATS_CHAIN_V4} 2>/dev/null")
+        run_sudo(f"iptables -X {STATS_CHAIN_V4} 2>/dev/null")
+        time.sleep(0.2)
+        # 创建新链
+        run_sudo(f"iptables -N {STATS_CHAIN_V4}")
+        # 为每个网段添加上传/下载统计规则（无target，仅计数，继续匹配下一条）
+        for net in v4_subnets:
+            run_sudo(f"iptables -A {STATS_CHAIN_V4} -s {net}")   # 上传
+            run_sudo(f"iptables -A {STATS_CHAIN_V4} -d {net}")   # 下载
+        # RETURN 回 FORWARD
+        run_sudo(f"iptables -A {STATS_CHAIN_V4} -j RETURN")
+        # 插入到 FORWARD 第一条（在所有其他链之前统计）
+        run_sudo(f"iptables -I FORWARD 1 -j {STATS_CHAIN_V4}")
+        print(f"[Stats] IPv4统计链已建立，网段: {v4_subnets}")
+    except Exception as e:
+        print(f"[Stats] IPv4统计链建立失败: {e}")
+
+    # ---------- IPv6 ----------
+    v6_prefixes = detect_ipv6_prefixes()
+    try:
+        run_sudo(f"ip6tables -D FORWARD -j {STATS_CHAIN_V6} 2>/dev/null")
+        run_sudo(f"ip6tables -F {STATS_CHAIN_V6} 2>/dev/null")
+        run_sudo(f"ip6tables -X {STATS_CHAIN_V6} 2>/dev/null")
+        time.sleep(0.2)
+        run_sudo(f"ip6tables -N {STATS_CHAIN_V6}")
+        for pfx in v6_prefixes:
+            run_sudo(f"ip6tables -A {STATS_CHAIN_V6} -s {pfx}")
+            run_sudo(f"ip6tables -A {STATS_CHAIN_V6} -d {pfx}")
+        run_sudo(f"ip6tables -A {STATS_CHAIN_V6} -j RETURN")
+        run_sudo(f"ip6tables -I FORWARD 1 -j {STATS_CHAIN_V6}")
+        print(f"[Stats] IPv6统计链已建立，前缀: {v6_prefixes}")
+    except Exception as e:
+        print(f"[Stats] IPv6统计链建立失败: {e}")
+
+    return v4_subnets, v6_prefixes
+
+
+def read_stats_counters():
+    """读取独立统计链的计数器。
+    返回 (upload_bytes, download_bytes, chain_ok)，IPv4+IPv6合并。
+    chain_ok=False 表示统计链不存在，调用方应立即重建。
+    """
+    upload_bytes = 0
+    download_bytes = 0
+    v4_ok = False
+
+    # IPv4
+    try:
+        result = subprocess.run(
+            ['sudo', 'iptables', '-L', STATS_CHAIN_V4, '-n', '-v', '-x'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0 and STATS_CHAIN_V4 in result.stdout:
+            v4_ok = True
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            if len(parts) < 8 or parts[0] in ('pkts', 'Chain'):
+                continue
+            try:
+                b = int(parts[1].replace(',', ''))
+                src = parts[6]
+                dst = parts[7]
+                # 规则顺序：每个网段先 -s（上传）后 -d（下载）
+                if dst == '0.0.0.0/0' and src != '0.0.0.0/0':
+                    upload_bytes += b
+                elif src == '0.0.0.0/0' and dst != '0.0.0.0/0':
+                    download_bytes += b
+            except (ValueError, IndexError):
+                continue
+    except Exception:
+        pass
+
+    # IPv6
+    try:
+        result = subprocess.run(
+            ['sudo', 'ip6tables', '-L', STATS_CHAIN_V6, '-n', '-v', '-x'],
+            capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            if len(parts) < 8 or parts[0] in ('pkts', 'Chain'):
+                continue
+            try:
+                b = int(parts[1].replace(',', ''))
+                src = parts[6]
+                dst = parts[7]
+                if dst == '::/0' and src != '::/0':
+                    upload_bytes += b
+                elif src == '::/0' and dst != '::/0':
+                    download_bytes += b
+            except (ValueError, IndexError):
+                continue
+    except Exception:
+        pass
+
+    return upload_bytes, download_bytes, v4_ok
+
+
+def verify_stats_chain():
+    """验证统计链完整性。返回 True/False。"""
+    # 检查 IPv4
+    try:
+        result = subprocess.run(
+            ['sudo', 'iptables', '-L', 'FORWARD', '-n'],
+            capture_output=True, text=True, timeout=5
+        )
+        if STATS_CHAIN_V4 not in result.stdout:
+            return False
+        result2 = subprocess.run(
+            ['sudo', 'iptables', '-L', STATS_CHAIN_V4, '-n'],
+            capture_output=True, text=True, timeout=5
+        )
+        # 链中至少要有统计规则（包含局域网网段）
+        if '192.168.' not in result2.stdout:
+            return False
+    except Exception:
+        return False
+    return True
+
+
+def ensure_stats_chain():
+    """确保统计链完整，异常则重建。返回 True 表示正常（含已修复）。"""
+    if verify_stats_chain():
+        return True
+    print("[Stats] 检测到统计链异常，正在重建...")
+    try:
+        setup_stats_chain()
+        return verify_stats_chain()
+    except Exception as e:
+        print(f"[Stats] 重建失败: {e}")
+        return False
