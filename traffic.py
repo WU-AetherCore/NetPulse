@@ -16,10 +16,11 @@ from database import (
 def run_iptables(cmd):
     """执行iptables命令（需要sudo）"""
     try:
-        full_cmd = ["sudo", "-S"] + cmd
+        import os as _os
+        # 服务以 root 运行时直接执行；非 root 环境依赖免密 sudo（sudo -n），不保存任何密码
+        full_cmd = cmd if (hasattr(_os, "geteuid") and _os.geteuid() == 0) else ["sudo", "-n"] + cmd
         result = subprocess.run(
             full_cmd,
-            input="orangepi\n",
             capture_output=True, text=True, timeout=10
         )
         return result.stdout, result.returncode
@@ -277,10 +278,11 @@ class TrafficMonitor(threading.Thread):
 def run_ip6tables(cmd):
     """执行ip6tables命令（需要sudo）"""
     try:
-        full_cmd = ["sudo", "-S"] + cmd
+        import os as _os
+        # 服务以 root 运行时直接执行；非 root 环境依赖免密 sudo（sudo -n），不保存任何密码
+        full_cmd = cmd if (hasattr(_os, "geteuid") and _os.geteuid() == 0) else ["sudo", "-n"] + cmd
         result = subprocess.run(
             full_cmd,
-            input="orangepi\n",
             capture_output=True, text=True, timeout=10
         )
         return result.stdout, result.returncode
@@ -348,7 +350,7 @@ def read_ip6tables_counters():
                 bytes_count = int(parts[1])
                 source = parts[6] if len(parts) > 6 else ""
                 dest = parts[7] if len(parts) > 7 else ""
-                ip = source if source and source != "::/0" else dest
+                ip = source if source != "::/0" else dest
                 if ip and '/' in ip:
                     ip = ip.split('/')[0]
                 if ip and ip != "::" and ip != "::1":

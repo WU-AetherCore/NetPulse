@@ -6,7 +6,7 @@ LOG_FILE="/var/log/netpulse-monitor.log"
 NETPULSE_URL="http://localhost:8081"
 STATE_FILE="/tmp/netpulse-monitor-state"
 TRAFFIC_STATE_FILE="/tmp/netpulse-traffic-state"
-CONFIG_FILE="/home/orangepi/netpulse/config.py"
+CONFIG_FILE="/opt/netpulse/config.py"
 EXPECTED_INTERFACE="eth0"
 
 log() {
@@ -14,7 +14,12 @@ log() {
 }
 
 run_sudo() {
-    echo "orangepi" | sudo -S "$@" 2>/dev/null
+    # cron 以 root 运行时直接执行；非 root 环境依赖免密 sudo（sudo -n），不在脚本中保存密码
+    if [ "$(id -u)" -eq 0 ]; then
+        "$@"
+    else
+        sudo -n "$@" 2>/dev/null
+    fi
 }
 
 check_service() {

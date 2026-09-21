@@ -12,15 +12,10 @@ from database import upsert_device, mark_device_offline, record_connection_event
 
 # OUI厂商识别（常用前缀）
 OUI_DATABASE = {
-    "4c:d2:fb": "中国移动",
+    # 仅收录公开注册的常见厂商 OUI 前缀；手机随机/本地管理 MAC 无法据此识别厂商。
+    # 设备可在 Web 界面手动重命名。可按需自行扩充本表。
     "44:f7:70": "小米路由器",
     "f8:29:eb": "Orange Pi",
-    "02:00:ab": "Orange Pi",
-    "d2:41:30": "Android设备",
-    "de:ef:0e": "Android设备",
-    "42:b3:9a": "Android设备",
-    "4c:03:4f": "Android设备",
-    "e6:f8:95": "Android设备",
     "c8:75:f4": "华为设备",
     "a4:50:46": "小米手机",
     "64:09:80": "小米手机",
@@ -74,15 +69,16 @@ def read_arp_table():
 
 
 def ping_scan():
-    """ping扫描所有网段（快速唤醒设备）"""
+    """ping扫描主网段唤醒设备（分批低并发，避免ARP广播风暴冲击设备网关缓存）"""
     try:
-        # 扫描 192.168.1.x 和 192.168.0.x 两个网段
-        result = subprocess.run(
-            ["bash", "-c",
-             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.1.$i >/dev/null 2>&1 & done; "
-             f"for i in $(seq 1 254); do ping -c 1 -W {PING_TIMEOUT} 192.168.0.$i >/dev/null 2>&1 & done; wait"],
-            capture_output=True, text=True, timeout=20
-        )
+        # 仅扫描主网段 192.168.1.x；分批并发，每批40个，避免瞬时数百ARP请求
+        for start in range(1, 255, 40):
+            cmds = " ".join(
+                f"(ping -c 1 -W {PING_TIMEOUT} 192.168.1.{i} >/dev/null 2>&1 &)"
+                for i in range(start, min(start + 40, 255))
+            )
+            subprocess.run(["bash", "-c", cmds], capture_output=True, text=True, timeout=10)
+            time.sleep(0.3)
     except Exception as e:
         print(f"ping扫描失败: {e}")
 
@@ -150,11 +146,8 @@ def scan_devices():
     ping_scan()
     time.sleep(1)
 
-    # 读取ARP表（直连设备）
+    # 读取ARP表（直连设备，含 eth0/wlan0 两个接口学到的邻居）
     arp_devices = read_arp_table()
-
-    # 扫描路由网段设备（非直连）
-    routed_devices = scan_routed_devices()
 
     # 更新数据库 - 直连设备
     now = int(time.time())
@@ -162,15 +155,10 @@ def scan_devices():
         vendor = get_vendor(mac)
         upsert_device(mac, ip, vendor=vendor)
 
-    # 更新数据库 - 路由设备（标记为"路由设备"，只能看在线状态）
-    for mac, ip in routed_devices.items():
-        if mac not in arp_devices:  # 避免和直连设备重复
-            upsert_device(mac, ip, name='路由设备', vendor='跨网段设备')
-
     # 检查离线设备
     check_offline_devices()
 
-    return {**arp_devices, **routed_devices}
+    return dict(arp_devices)
 
 
 def check_offline_devices():
@@ -185,7 +173,7 @@ def check_offline_devices():
 
 class Scanner(threading.Thread):
     """后台扫描线程"""
-    def __init__(self, interval=30):
+    def __init__(self, interval=60):
         super().__init__(daemon=True)
         self.interval = interval
         self.running = True
