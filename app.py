@@ -294,7 +294,7 @@ def api_block_device(mac):
 
 @app.route('/api/device/<mac>/unblock', methods=['POST'])
 def api_unblock_device(mac):
-    """解除设备封禁"""
+    """解除封禁"""
     device = get_device_by_mac(mac)
     if not device:
         return jsonify({"error": "设备不存在"}), 404
@@ -750,7 +750,7 @@ def main():
 
     # 启动扫描线程
     print("[Init] 启动设备扫描线程...")
-    scanner = Scanner(interval=30)
+    scanner = Scanner(interval=60)
     scanner.start()
 
     # 启动流量监控线程
@@ -857,101 +857,51 @@ speedtest_monitor_thread = None
 
 
 def _monitor_global_interface_speed():
-    """常驻监控转发流量速率（IPv4+IPv6，只统计其他设备的）"""
+    """常驻监控转发流量速率（独立统计链，IPv4+IPv6，只统计其他设备）"""
     import time
     import subprocess
+    from device_manager import setup_stats_chain, read_stats_counters, ensure_stats_chain
     global global_interface_rates
 
-    # 初始化：添加IPv4和IPv6总统计规则
-    try:
-        # IPv4规则（两个网段都统计）
-        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '1', '-s', '192.168.1.0/24'],
-                      capture_output=True, timeout=5)
-        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '2', '-d', '192.168.1.0/24'],
-                      capture_output=True, timeout=5)
-        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '3', '-s', '192.168.0.0/24'],
-                      capture_output=True, timeout=5)
-        subprocess.run(['sudo', 'iptables', '-I', 'NETPULSE', '4', '-d', '192.168.0.0/24'],
-                      capture_output=True, timeout=5)
-        # IPv6规则
-        subprocess.run(['sudo', 'ip6tables', '-I', 'NETPULSE', '1', '-s', '2409:8a62:6927:9ac0::/64'],
-                      capture_output=True, timeout=5)
-        subprocess.run(['sudo', 'ip6tables', '-I', 'NETPULSE', '2', '-d', '2409:8a62:6927:9ac0::/64'],
-                      capture_output=True, timeout=5)
-        print("[GlobalRate] 已添加IPv4+IPv6总流量统计规则")
-    except Exception as e:
-        print(f"[GlobalRate] 添加规则失败: {e}")
-
-    def read_counters():
-        """读取IPv4+IPv6总计数器"""
-        upload_bytes = 0
-        download_bytes = 0
-
-        # 读取IPv4（统计两个网段：192.168.1.0/24 + 192.168.0.0/24）
-        try:
-            result = subprocess.run(
-                ['sudo', 'iptables', '-L', 'NETPULSE', '-n', '-v', '-x'],
-                capture_output=True, text=True, timeout=5
-            )
-            for line in result.stdout.split('\n'):
-                parts = line.split()
-                if len(parts) < 8:
-                    continue
-                try:
-                    bytes_count = int(parts[1].replace(',', ''))
-                    source = parts[6] if len(parts) > 6 else ''
-                    dest = parts[7] if len(parts) > 7 else ''
-                    # 上传：源是局域网网段之一
-                    if (source == '192.168.1.0/24' or source == '192.168.0.0/24') and dest == '0.0.0.0/0':
-                        upload_bytes += bytes_count
-                    # 下载：目的是局域网网段之一
-                    elif source == '0.0.0.0/0' and (dest == '192.168.1.0/24' or dest == '192.168.0.0/24'):
-                        download_bytes += bytes_count
-                except:
-                    continue
-        except:
-            pass
-
-        # 读取IPv6
-        try:
-            result = subprocess.run(
-                ['sudo', 'ip6tables', '-L', 'NETPULSE', '-n', '-v', '-x'],
-                capture_output=True, text=True, timeout=5
-            )
-            for line in result.stdout.split('\n'):
-                parts = line.split()
-                if len(parts) < 8:
-                    continue
-                try:
-                    bytes_count = int(parts[1].replace(',', ''))
-                    source = parts[6] if len(parts) > 6 else ''
-                    dest = parts[7] if len(parts) > 7 else ''
-                    if '2409:8a62:6927:9ac0::' in source and dest == '::/0':
-                        upload_bytes += bytes_count
-                    elif source == '::/0' and '2409:8a62:6927:9ac0::' in dest:
-                        download_bytes += bytes_count
-                except:
-                    continue
-        except:
-            pass
-
-        return upload_bytes, download_bytes
+    # 初始化独立统计链（幂等，会重建为正确结构）
+    setup_stats_chain()
 
     time.sleep(2)
 
-    last_upload, last_download = read_counters()
+    last_upload, last_download, _ = read_stats_counters()
     last_time = time.time()
+    last_deep_check = time.time()
 
-    print("[GlobalRate] 转发流量监控线程已启动（IPv4+IPv6，只统计其他设备）")
+    print("[GlobalRate] 转发流量监控线程已启动（独立统计链 NETSTATS，IPv4+IPv6）")
 
     while True:
         try:
             time.sleep(3)
-            current_upload, current_download = read_counters()
+            current_upload, current_download, chain_ok = read_stats_counters()
+
+            # 统计链丢失（被清空/服务重启/规则被冲掉），3秒内立即重建
+            if not chain_ok:
+                print("[GlobalRate] 检测到统计链丢失，立即重建...")
+                try:
+                    setup_stats_chain()
+                except Exception as e:
+                    print(f"[GlobalRate] 重建失败: {e}")
+                last_upload, last_download, _ = read_stats_counters()
+                last_time = time.time()
+                continue
 
             now = time.time()
             delta = now - last_time
-            if delta > 0 and current_upload >= last_upload:
+
+            # 如果计数器回退（链被重建），重置基线而不是计算负速率
+            if current_upload < last_upload or current_download < last_download:
+                print("[GlobalRate] 检测到计数器重置（统计链重建），重置基线")
+                last_upload = current_upload
+                last_download = current_download
+                last_time = now
+                continue
+
+            if delta > 0:
                 upload_kbps = max(0, (current_upload - last_upload) / delta / 1024)
                 download_kbps = max(0, (current_download - last_download) / delta / 1024)
                 global_interface_rates['upload_kbps'] = upload_kbps
@@ -963,12 +913,18 @@ def _monitor_global_interface_speed():
             last_upload = current_upload
             last_download = current_download
             last_time = now
+
+            # 每90秒做一次深度校验（检测网段变化、IPv6前缀变化并重建）
+            if now - last_deep_check > 90:
+                last_deep_check = now
+                try:
+                    ensure_stats_chain()
+                except Exception:
+                    pass
+
         except Exception as e:
             print(f"[GlobalRate] 监控错误: {e}")
             time.sleep(3)
-
-
-
 
 
 def _monitor_interface_speed():
