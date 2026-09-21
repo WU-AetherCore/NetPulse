@@ -59,6 +59,15 @@ echo "  本机IP: $LOCAL_IP"
 echo "  本机MAC: $LOCAL_MAC"
 echo "  网段: $NETWORK_CIDR"
 
+# 设置 Web 管理员密码（环境变量优先，否则交互输入，默认 admin123）
+if [ -n "$NETPULSE_ADMIN_PASSWORD" ]; then
+    ADMIN_PASSWORD="$NETPULSE_ADMIN_PASSWORD"
+    echo "  管理员密码: 已从环境变量 NETPULSE_ADMIN_PASSWORD 读取"
+else
+    read -p "  请设置 Web 管理员密码（直接回车则用默认 admin123，建议登录后立即修改）: " INPUT_PW
+    ADMIN_PASSWORD="${INPUT_PW:-admin123}"
+fi
+
 # 写入配置文件
 cat > config.py << EOF
 """
@@ -74,7 +83,7 @@ LOG_PATH = os.path.join(BASE_DIR, "netpulse.log")
 WEB_HOST = "0.0.0.0"
 WEB_PORT = ${WEB_PORT}
 
-SCAN_INTERVAL = 30
+SCAN_INTERVAL = 60
 TRAFFIC_INTERVAL = 3
 PING_TIMEOUT = 1
 PING_COUNT = 1
@@ -93,7 +102,7 @@ DAILY_RETENTION_DAYS = 90
 
 OFFLINE_THRESHOLD = 120
 
-ADMIN_PASSWORD = "admin123"
+ADMIN_PASSWORD = "${ADMIN_PASSWORD}"
 EOF
 echo "  ✓ 配置文件已生成"
 
