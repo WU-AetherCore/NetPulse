@@ -4,7 +4,7 @@
 
 ![Version](https://img.shields.io/badge/version-2.5-blue)
 ![Python](https://img.shields.io/badge/python-3.7+-green)
-![License](https://img.shields.io/badge/license-MIT-yellow)
+![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-4466cc)
 ![Platform](https://img.shields.io/badge/platform-Orange%20Pi%20%7C%20Raspberry%20Pi-orange)
 
 ---
@@ -836,7 +836,9 @@ NetPulse/
 
 ## 📄 许可证
 
-MIT License
+本项目原创代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)：允许个人学习、实验、修改和非商业分享；商业用途须事先取得 WU-AetherCore 的书面许可。版权仍归 WU-AetherCore。第三方依赖继续适用各自许可。
+
+**历史版本说明：** 本仓库较早版本曾按 MIT 发布；旧版本及其当时已授予的 MIT 权利不会因本次更新而追溯改变。此许可适用于本次更新后的项目原创内容。
 
 ---
 
